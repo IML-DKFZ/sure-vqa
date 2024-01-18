@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -40,12 +41,15 @@ class LLaVA_Med(pl.LightningModule):
             model_base=None,
             model_name=self.model_name
         )
+        self.test_results = []
 
 
     def test_step(self, batch, batch_idx):
         # Get the question and image pairs
         # Note: They load the questions and answers from a file (is it relevant here)
-        images, questions, _ = batch  # check correctness
+        images = batch["image"]
+        questions = batch["question"]
+
         # generate the question form with image token
         images = self.image_processor.preprocess(images=images, return_tensors="pt")["pixel_values"]
         images = images.type(torch.float16)
@@ -120,10 +124,21 @@ class LLaVA_Med(pl.LightningModule):
         if outputs.endswith(stop_str):
             outputs = outputs[: -len(stop_str)]
         outputs = outputs.strip()
-        print(qs)
-        print(outputs)
-    #
-    # def load_only_state_dict(self, path: str | Path) -> None:
-    #     pass
+        # print(qs)
+        # print(outputs)
+        self.test_results.append({
+            "qid": batch["qid"][0].item(),
+            "question": batch["question"][0],
+            "gt": batch["gt"][0],
+            "pred": outputs,
+            "answer_type": batch["answer_type"][0],
+            "img_name": batch["img_name"][0],
+        })
+
+
+    def on_test_end(self):
+        json_path = "/nvme/VLMRobustness/test_results.json"
+        with open(json_path, 'w') as json_file:
+            json.dump(self.test_results, json_file, indent=2)
 
 

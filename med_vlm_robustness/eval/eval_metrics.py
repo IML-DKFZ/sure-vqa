@@ -1,6 +1,6 @@
 import math
-from llava.utils import *
-from .glossary import *
+from utils import *
+from glossary import *
 
 
 def bleu(candidate, references, n, weights):

@@ -18,6 +18,13 @@ class SlakeDataset(Dataset):
     def __getitem__(self, index):
         row = self.json.iloc[index]
         image = cv2.imread(str(self.dataset_path / "imgs" / row.img_name))
-        question = row.question
-        answer = row.answer
-        return image, question, answer
+        batch = {
+            "image": image,
+            "question": row.question,
+            "gt": row.answer,
+            "qid": row.qid,
+            "answer_type": row.answer_type,
+            "img_name": row.img_name,
+        }
+        print(row.qid, index)
+        return batch

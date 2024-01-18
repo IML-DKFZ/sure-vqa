@@ -72,8 +72,10 @@ def get_datamodule(name:str, batch_size:int):
         # TODO: should we really do it like this?
         else:
             df_train = pd.read_json(data_dir / "train.json")
+            df_train = df_train.loc[df_train['q_lang'] == "en"]
             df_train = df_train.loc[df_train[split_category] == split_value]
             df_val = pd.read_json(data_dir / "validate.json")
+            df_val = df_val.loc[df_val['q_lang'] == "en"]
             df_val = df_val.loc[df_val[split_category] == split_value]
             df = pd.concat([df_test, df_train, df_val])
     # TODO: pass batch size as argument
