@@ -46,18 +46,17 @@ class SlakeDatamodule(pl.LightningDataModule):
         )
 
 
-def get_datamodule(name:str, batch_size:int):
-    dataroot = Path("/nvme/VLMRobustness")
+def get_slake_datamodule(dataroot, batch_size, mode, split, split_category=None, split_value=None):
     dataset = "Slake"
     data_dir = dataroot / dataset
-    identifier = name.split("_")[1:]
-    split = identifier[0]
-    mode = identifier[1]
-    split_category = identifier[2].replace("-", "_")
-    split_value = identifier[3].capitalize() if split_category == "content_type" else identifier[3]
+
+    split_value = split_value.capitalize() if split_category == "content_type" else split_value
 
     df = pd.read_json(data_dir / f"{mode}.json")
     df = df.loc[df['q_lang'] == "en"]
+
+    if split == "all":
+        return SlakeDatamodule(data_dir=data_dir, batch_size=batch_size, df=df)
 
     if mode == "train" or mode == "validate" or (mode == "test" and split == "iid"):
         df = df.loc[df[split_category] != split_value]
@@ -80,3 +79,23 @@ def get_datamodule(name:str, batch_size:int):
             df = pd.concat([df_test, df_train, df_val])
     # TODO: pass batch size as argument
     return SlakeDatamodule(data_dir=data_dir, batch_size=batch_size, df=df)
+
+
+def get_datamodule(name:str, batch_size:int):
+    dataroot = Path("/nvme/VLMRobustness")
+    identifier = name.split("_")
+    dataset = identifier[0]
+    mode = identifier[1]
+    split = identifier[2]
+    if split != "all":
+        split_category = identifier[3].replace("-", "_")
+        split_value = identifier[4]
+    else:
+        split_category = None
+        split_value = None
+
+    if dataset == "slake":
+        return get_slake_datamodule(dataroot=dataroot, mode=mode, split=split, split_category=split_category,
+                                    split_value=split_value, batch_size=batch_size)
+    else:
+        raise NotImplementedError(f"Dataset {dataset} not implemented")

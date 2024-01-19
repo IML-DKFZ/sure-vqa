@@ -7,7 +7,7 @@ from pytorch_lightning import Trainer
 
 def main():
     llava = LLaVA_Med()
-    dm = get_datamodule("slake_ood_test_modality_X-Ray", batch_size=1)
+    dm = get_datamodule("slake_test_ood_modality_X-Ray", batch_size=1)
     dm.setup()
 
     trainer = Trainer(accelerator="gpu" if torch.cuda.is_available() else "cpu")
