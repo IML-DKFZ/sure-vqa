@@ -18,12 +18,20 @@ class SlakeDataset(Dataset):
     def __getitem__(self, index):
         row = self.json.iloc[index]
         image = cv2.imread(str(self.dataset_path / "imgs" / row.img_name))
+        question = row.question
+        answer = row.answer
+        answer_type = row.answer_type
+        if answer_type == "CLOSED":
+            if answer in ["Yes", "No"]:
+                question += " Please choose from the following two options: [yes, no]."
+            else:
+                answer_type = "OPEN"
         batch = {
             "image": image,
-            "question": row.question,
-            "gt": row.answer,
+            "question": question,
+            "gt": answer,
             "qid": row.qid,
-            "answer_type": row.answer_type,
+            "answer_type": answer_type,
             "img_name": row.img_name,
         }
         print(row.qid, index)
