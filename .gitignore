@@ -170,3 +170,5 @@ cython_debug/
 ._.DS_Store
 
 lightning_logs/
+runs/
+wandb/
