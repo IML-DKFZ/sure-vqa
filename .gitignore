@@ -168,3 +168,5 @@ cython_debug/
 # Mac
 .DS_Store
 ._.DS_Store
+
+lightning_logs/
