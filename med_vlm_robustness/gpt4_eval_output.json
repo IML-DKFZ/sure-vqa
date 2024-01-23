@@ -1,0 +1,7 @@
+"\"{\\\"question\\\": \\\"Which part of the body does this image belong to?\\\", \\\"model_answer\\\": \\\"It is Abdomen\\\", \\\"ground_truth\\\": \\\"Abdomen\\\", \\\"gpt4-score\\\":10}\""
+"\"{\\\"question\\\": \\\"What modality is used to take this image?\\\", \\\"model_answer\\\": \\\"I don't know\\\", \\\"ground_truth\\\": \\\"MRI\\\", \\\"gpt4-score\\\":0}\""
+"\"{\\\"question\\\": \\\"Where is the liver?\\\", \\\"model_answer\\\": \\\"Maybe Left\\\", \\\"ground_truth\\\": \\\"Right\\\", \\\"gpt4-score\\\":0}\""
+"\"{'question': 'Where is the liver?', 'model_answer': 'Right', 'ground_truth': 'Right', 'gpt4-score':10}\""
+"\"{\\\"question\\\": \\\"Where is the liver?\\\", \\\"model_answer\\\": \\\"Definitely Right\\\", \\\"ground_truth\\\": \\\"Right\\\", \\\"gpt4-score\\\":6}\""
+"\"{\\\"question\\\": \\\"Does the picture contain liver?\\\", \\\"model_answer\\\": \\\"No\\\", \\\"ground_truth\\\": \\\"Yes\\\", \\\"gpt4-score\\\":0}\""
+"\"{\\\"question\\\": \\\"Does the picture contain liver?\\\", \\\"model_answer\\\": \\\"Maybe No but maybe yes\\\", \\\"ground_truth\\\": \\\"Yes\\\", \\\"gpt4-score\\\":1}\""
