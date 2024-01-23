@@ -1,3 +1,5 @@
+import json
+import os.path
 from pathlib import Path
 from typing import Optional
 
@@ -46,17 +48,14 @@ class SlakeDatamodule(pl.LightningDataModule):
         )
 
 
-def get_slake_datamodule(dataroot, batch_size, mode, split, split_category=None, split_value=None):
-    dataset = "Slake"
-    data_dir = dataroot / dataset
-
+def get_slake_df(data_dir, mode, split, split_category=None, split_value=None):
     split_value = split_value.capitalize() if split_category == "content_type" else split_value
 
     df = pd.read_json(data_dir / f"{mode}.json")
     df = df.loc[df['q_lang'] == "en"]
 
     if split == "all":
-        return SlakeDatamodule(data_dir=data_dir, batch_size=batch_size, df=df)
+        return df
 
     if mode == "train" or mode == "validate" or (mode == "test" and split == "iid"):
         df = df.loc[df[split_category] != split_value]
@@ -77,8 +76,7 @@ def get_slake_datamodule(dataroot, batch_size, mode, split, split_category=None,
             df_val = df_val.loc[df_val['q_lang'] == "en"]
             df_val = df_val.loc[df_val[split_category] == split_value]
             df = pd.concat([df_test, df_train, df_val])
-    # TODO: pass batch size as argument
-    return SlakeDatamodule(data_dir=data_dir, batch_size=batch_size, df=df)
+    return df
 
 
 def get_datamodule(name:str, batch_size:int):
@@ -95,7 +93,72 @@ def get_datamodule(name:str, batch_size:int):
         split_value = None
 
     if dataset == "slake":
-        return get_slake_datamodule(dataroot=dataroot, mode=mode, split=split, split_category=split_category,
-                                    split_value=split_value, batch_size=batch_size)
+        dataset_name = "Slake"
+        data_dir = dataroot / dataset_name
+        df = get_slake_df(data_dir=data_dir, mode=mode, split=split, split_category=split_category,
+                                    split_value=split_value)
+        return SlakeDatamodule(data_dir=data_dir, batch_size=batch_size, df=df)
     else:
         raise NotImplementedError(f"Dataset {dataset} not implemented")
+
+
+def convert_raw_to_final(df, save_path):
+    final_data = []
+
+    # Process each entry as a separate conversation
+    for _, row in df.iterrows():
+        qid = row["qid"]
+        new_entry = {
+            "id": str(qid),
+            "image": f"imgs/" + row["img_name"],
+            "conversations": [
+                {
+                    "from": "human",
+                    "value": row["question"]
+                },
+                {
+                    "from": "gpt",
+                    "value": row["answer"]
+                }
+            ],
+            "img_id": row["img_id"],
+            "language": row["q_lang"],
+            "location": row["location"],
+            "modality": row["modality"],
+            "answer_type": row["answer_type"],
+            "base_type": row["base_type"],
+            "content_type": row["content_type"],
+        }
+        final_data.append(new_entry)
+
+    with open(str(save_path), 'w') as output_file:
+        json.dump(final_data, output_file, indent=4)
+
+
+def get_json_filename(name:str):
+    dataroot = Path("/nvme/VLMRobustness")
+    identifier = name.split("_")
+    dataset = identifier[0]
+    if dataset == "slake":
+        dataset_name = "Slake"
+        data_dir = dataroot / dataset_name
+    else:
+        raise NotImplementedError(f"Dataset {dataset} not implemented")
+    if os.path.isfile(data_dir / f"{name}.json"):
+        return data_dir / f"{name}.json"
+    else:
+        mode = identifier[1]
+        split = identifier[2]
+        if split != "all":
+            split_category = identifier[3].replace("-", "_")
+            split_value = identifier[4]
+        else:
+            split_category = None
+            split_value = None
+        if dataset == "slake":
+            df = get_slake_df(data_dir=data_dir, mode=mode, split=split, split_category=split_category,
+                              split_value=split_value)
+        else:
+            raise NotImplementedError(f"Dataset {dataset} not implemented")
+        convert_raw_to_final(df, data_dir / f"{name}.json")
+        return data_dir / f"{name}.json"

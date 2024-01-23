@@ -1,11 +1,20 @@
 from llava.train.train import *
+
+from med_vlm_robustness.datamodule import get_json_filename
+
+
 #from llava.train.train import ModelArguments, DataArguments, TrainingArguments
 
 
 def main():
+    data_root_dir = "/nvme/VLMRobustness"
+    dataset = "Slake"
+    split_file = "slake_train_all"
+    output_dir = f"{data_root_dir}/{dataset}/Experiments/LoRA"
+
     model_args = ModelArguments()
     data_args = DataArguments()
-    training_args = TrainingArguments(output_dir="/home/kckahl/Code/med-vlm-robustness")
+    training_args = TrainingArguments(output_dir=output_dir)
 
     # add lora
     training_args.lora_enable = True
@@ -17,8 +26,10 @@ def main():
 
     model_args.model_name_or_path = "liuhaotian/llava-v1.5-7b"
     model_args.version = "v1"
-    data_args.data_path = "/home/kckahl/Code/med-vlm-robustness/med_vlm_robustness/final_output.json"
-    data_args.image_folder = "/nvme/VLMRobustness/Slake"
+
+    # get dataset json
+    data_args.data_path = get_json_filename(split_file)
+    data_args.image_folder = f"{data_root_dir}/{dataset}"
 
     model_args.vision_tower = "openai/clip-vit-large-patch14-336"
     model_args.mm_projector_type = "mlp2x_gelu"
@@ -30,7 +41,7 @@ def main():
     training_args.image_aspect_ratio = "pad"
     training_args.group_by_modality_length = True
     training_args.bf16 = True
-    training_args.output_dir = "/home/kckahl/Code/med-vlm-robustness"
+    training_args.output_dir = output_dir
     training_args.num_train_epochs = 1
     training_args.per_device_train_batch_size = 16
     training_args.per_device_eval_batch_size = 4
