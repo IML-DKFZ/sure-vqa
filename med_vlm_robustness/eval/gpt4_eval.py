@@ -1,28 +1,30 @@
 import json
 from openai import OpenAI
+import os
 import ndjson
-import pathlib
+
+OPEN_AI_API_KEY = os.getenv("OPEN_AI_API_KEY")
 
 def gpt4_eval():
 
-    # set the path to the current project folder
-    prj_path = str(pathlib.Path("med_vlm_robustness").resolve())
+    # get the path to the current file
+    path_of_this_script = os.path.dirname(__file__)
 
     # read the initial prompt to guide gpt4
     with open(
-                prj_path + '/med_vlm_robustness/gpt4_instructions.txt',
+                path_of_this_script + '/../gpt4_instructions.txt',
                 'r'
         ) as f:
         initial_prompt = f.read()
 
     # load the json file containing the data we wanna evaluate
-    with open(prj_path + '/med_vlm_robustness/gpt4_input_data.json', 'r') as file:
+    with open(path_of_this_script + '/../gpt4_input_data.json', 'r') as file:
         # Load the JSON data
         json_file = file.read()
     input_data = json.loads(json_file)
 
     # get access to gpt4 api
-    client = OpenAI(api_key="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")
+    client = OpenAI(api_key=OPEN_AI_API_KEY)
     output = []
     full_output_log = []
 
@@ -56,7 +58,7 @@ def gpt4_eval():
     #     ndjson.dump(full_output_log, f)
         
     # save the results to a json file
-    with open(prj_path + '/med_vlm_robustness/gpt4_eval_output.json', 'w') as f:
+    with open(path_of_this_script + '/../gpt4_eval_output.json', 'w') as f:
         ndjson.dump(output, f)
 
 gpt4_eval()
