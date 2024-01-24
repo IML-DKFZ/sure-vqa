@@ -32,21 +32,15 @@ def get_config():
 
 
 def main(cfg):
-    data_root_dir = "/nvme/VLMRobustness"
-    dataset = "Slake"
-    split_file = "slake_train_all"
-    output_dir = f"{data_root_dir}/{dataset}/Experiments/LoRA"
-
-    model_args = ModelArguments(cfg.model_args)
-    data_args = DataArguments(cfg.data_args)
-    training_args = TrainingArguments(output_dir=output_dir)
+    model_args = ModelArguments(**cfg.model_args)
+    data_args = DataArguments(**cfg.data_args)
+    training_args = TrainingArguments(output_dir=cfg.output_dir)
     # TODO: Workaround for now because derived dataclasses cannot be instantiated with base class fields
     for key, value in cfg.training_args.items():
         setattr(training_args, key, value)
 
     # get dataset json
-    data_args.data_path = get_json_filename(split_file)
-    data_args.image_folder = f"{data_root_dir}/{dataset}"
+    data_args.data_path = get_json_filename(cfg.split_file)
 
     train(data_args=data_args, model_args=model_args, training_args=training_args)
 
