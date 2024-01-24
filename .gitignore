@@ -1,6 +1,19 @@
 _version.py
 docs/source/api
 
+### Custom ignored files
+
+# Outputs
+output.json
+final_output.json
+output_whole_text.json
+
+# Data
+Slake
+
+
+### General ignored files
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
