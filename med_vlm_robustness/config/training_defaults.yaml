@@ -1,7 +1,8 @@
 data_root_dir: ${oc.env:DATASET_ROOT_DIR}
 dataset: "Slake"
 split_file: "slake_train_all"
-output_dir: ${oc.env:EXPERIMENT_ROOT_DIR}/${dataset}/LoRA
+data_dir: ${data_root_dir}/${dataset}
+output_dir: ${oc.env:EXPERIMENT_ROOT_DIR}/${dataset}/LoRA/llava-${split_file}-finetune_lora
 
 
 training_args:
@@ -43,4 +44,4 @@ model_args:
 
 
 data_args:
-  image_folder: ${data_root_dir}/${dataset}
+  image_folder: ${data_dir}

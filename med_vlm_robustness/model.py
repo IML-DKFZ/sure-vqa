@@ -33,13 +33,14 @@ class LLaVA_Med(pl.LightningModule):
 
         # TODO: update with actual llava weights, not only delta
         disable_torch_init()
-        self.model_path = "liuhaotian/llava-v1.5-7b"
+        self.model_path = "/nvme/VLMRobustness/Experiments/Slake/LoRA/llava-slake_train_iid_modality_X-Ray-finetune_lora"
+        self.model_base = "liuhaotian/llava-v1.5-7b"
         self.model_name = get_model_name_from_path(self.model_path)
 
         self.tokenizer, self.model, self.image_processor, self.context_len = load_pretrained_model(
             model_path=self.model_path,
-            model_base=None,
-            model_name=self.model_name
+            model_base=self.model_base,
+            model_name=self.model_name,
         )
         self.test_results = []
 

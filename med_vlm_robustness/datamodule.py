@@ -135,15 +135,9 @@ def convert_raw_to_final(df, save_path):
         json.dump(final_data, output_file, indent=4)
 
 
-def get_json_filename(name:str):
-    dataroot = Path("/nvme/VLMRobustness")
+def get_json_filename(data_dir:Path, name:str):
     identifier = name.split("_")
     dataset = identifier[0]
-    if dataset == "slake":
-        dataset_name = "Slake"
-        data_dir = dataroot / dataset_name
-    else:
-        raise NotImplementedError(f"Dataset {dataset} not implemented")
     if os.path.isfile(data_dir / f"{name}.json"):
         return data_dir / f"{name}.json"
     else:
