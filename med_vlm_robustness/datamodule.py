@@ -81,7 +81,7 @@ def get_slake_df(data_dir, mode, split, split_category=None, split_value=None):
 
 def get_datamodule(data_dir:Path, name:str, batch_size:int):
     json_file = get_json_filename(data_dir, name)
-    df = pd.read_json(json_file)[:10]
+    df = pd.read_json(json_file)
     dataset = name.split("_")[0]
     if dataset == "slake":
         return SlakeDatamodule(data_dir=data_dir, batch_size=batch_size, df=df)
@@ -125,8 +125,8 @@ def convert_raw_to_final(df, save_path):
 def get_json_filename(data_dir:Path, name:str):
     identifier = name.split("_")
     dataset = identifier[0]
-    if os.path.isfile(data_dir / f"{name}.json"):
-        return data_dir / f"{name}.json"
+    if os.path.isfile(data_dir / "split_files" / f"{name}.json"):
+        return data_dir / "split_files" / f"{name}.json"
     else:
         mode = identifier[1]
         split = identifier[2]
@@ -141,5 +141,5 @@ def get_json_filename(data_dir:Path, name:str):
                               split_value=split_value)
         else:
             raise NotImplementedError(f"Dataset {dataset} not implemented")
-        convert_raw_to_final(df, data_dir / f"{name}.json")
-        return data_dir / f"{name}.json"
+        convert_raw_to_final(df, data_dir / "split_files" / f"{name}.json")
+        return data_dir / "split_files" / f"{name}.json"
