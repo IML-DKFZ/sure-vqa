@@ -34,5 +34,4 @@ class SlakeDataset(Dataset):
             "answer_type": answer_type,
             "img_name": row.img_name,
         }
-        print(row.qid, index)
         return batch

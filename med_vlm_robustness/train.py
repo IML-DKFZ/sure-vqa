@@ -1,36 +1,9 @@
-from argparse import ArgumentParser
 from pathlib import Path
 
 from llava.train.train import *
-from omegaconf import OmegaConf
 
 from med_vlm_robustness.datamodule import get_json_filename
-
-
-def get_config():
-    parser = ArgumentParser()
-    parser.add_argument(
-        "-c",
-        "--config",
-        type=str,
-        default="config/training_defaults.yaml",
-        help="Config file to use",
-    )
-    parser.add_argument("--overrides", nargs='+', help="Specify key-value pairs to override")
-    args = parser.parse_args()
-
-    yaml_config = OmegaConf.load(args.config)
-
-    # Merge YAML config with command line overrides
-    config = OmegaConf.merge(yaml_config, OmegaConf.from_cli())
-
-    # Apply dynamic overrides specified in the command line
-    if args.overrides:
-        for override in args.overrides:
-            key, val = override.split('=')
-            OmegaConf.update(config, key=key, value=val)
-
-    return config
+from med_vlm_robustness.utils import get_config
 
 
 def main(cfg):

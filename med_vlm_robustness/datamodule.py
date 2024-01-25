@@ -79,8 +79,7 @@ def get_slake_df(data_dir, mode, split, split_category=None, split_value=None):
     return df
 
 
-def get_datamodule(name:str, batch_size:int):
-    dataroot = Path("/nvme/VLMRobustness")
+def get_datamodule(data_dir:Path, name:str, batch_size:int):
     identifier = name.split("_")
     dataset = identifier[0]
     mode = identifier[1]
@@ -93,8 +92,6 @@ def get_datamodule(name:str, batch_size:int):
         split_value = None
 
     if dataset == "slake":
-        dataset_name = "Slake"
-        data_dir = dataroot / dataset_name
         df = get_slake_df(data_dir=data_dir, mode=mode, split=split, split_category=split_category,
                                     split_value=split_value)
         return SlakeDatamodule(data_dir=data_dir, batch_size=batch_size, df=df)

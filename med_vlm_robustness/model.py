@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -28,13 +29,13 @@ from llava.conversation import conv_templates, SeparatorStyle
 
 
 class LLaVA_Med(pl.LightningModule):
-    def __init__(self):
+    def __init__(self, cfg):
         super().__init__()
 
         # TODO: update with actual llava weights, not only delta
         disable_torch_init()
-        self.model_path = "/nvme/VLMRobustness/Experiments/Slake/LoRA/llava-slake_train_iid_modality_X-Ray-finetune_lora"
-        self.model_base = "liuhaotian/llava-v1.5-7b"
+        self.model_path = cfg.model_path
+        self.model_base = cfg.model_base
         self.model_name = get_model_name_from_path(self.model_path)
 
         self.tokenizer, self.model, self.image_processor, self.context_len = load_pretrained_model(
@@ -43,6 +44,7 @@ class LLaVA_Med(pl.LightningModule):
             model_name=self.model_name,
         )
         self.test_results = []
+        self.output_file = cfg.output_file
 
 
     def test_step(self, batch, batch_idx):
@@ -136,10 +138,10 @@ class LLaVA_Med(pl.LightningModule):
             "img_name": batch["img_name"][0],
         })
 
-
     def on_test_end(self):
-        json_path = "/nvme/VLMRobustness/test_results.json"
-        with open(json_path, 'w') as json_file:
+        if not Path(self.output_file).parent.is_dir():
+            os.makedirs(Path(self.output_file).parent)
+        with open(self.output_file, 'w') as json_file:
             json.dump(self.test_results, json_file, indent=2)
 
 
