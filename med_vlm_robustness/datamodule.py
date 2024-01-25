@@ -80,20 +80,10 @@ def get_slake_df(data_dir, mode, split, split_category=None, split_value=None):
 
 
 def get_datamodule(data_dir:Path, name:str, batch_size:int):
-    identifier = name.split("_")
-    dataset = identifier[0]
-    mode = identifier[1]
-    split = identifier[2]
-    if split != "all":
-        split_category = identifier[3].replace("-", "_")
-        split_value = identifier[4]
-    else:
-        split_category = None
-        split_value = None
-
+    json_file = get_json_filename(data_dir, name)
+    df = pd.read_json(json_file)[:10]
+    dataset = name.split("_")[0]
     if dataset == "slake":
-        df = get_slake_df(data_dir=data_dir, mode=mode, split=split, split_category=split_category,
-                                    split_value=split_value)
         return SlakeDatamodule(data_dir=data_dir, batch_size=batch_size, df=df)
     else:
         raise NotImplementedError(f"Dataset {dataset} not implemented")
