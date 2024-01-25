@@ -22,7 +22,7 @@ class SlakeDataset(Dataset):
         answer = [i["value"] for i in row.conversations if i["from"] == "gpt"][0]
         answer_type = row.answer_type
         if answer_type == "CLOSED":
-            if answer in ["Yes", "No"]:
+            if answer in ["Yes", "No", "yes", "no"]:
                 question += " Please choose from the following two options: [yes, no]."
             # TODO: with llm eval we should not include this, right?
             # else:

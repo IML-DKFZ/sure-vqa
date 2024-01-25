@@ -79,11 +79,44 @@ def get_slake_df(data_dir, mode, split, split_category=None, split_value=None):
     return df
 
 
+def get_ovqa_df(data_dir, mode, split, split_category=None, split_value=None):
+    if split_category == "question_type":
+        split_value = split_value.capitalize()
+    elif split_category == "image_organ":
+        split_value = split_value.upper()
+
+    df = pd.read_json(data_dir / f"{mode}.json")
+
+    if split == "all":
+        return df
+
+    if mode == "train" or mode == "validate" or (mode == "test" and split == "iid"):
+        df = df.loc[df[split_category] != split_value]
+    elif mode == "test" and split == "ood":
+        df_test = df.loc[df[split_category] == split_value]
+        # If the split value changes within one patient, we only filter the test set,
+        # since otherwise we might have the same patient / image within training and test set
+        if split_category in ["answer_type", "content_type"]:
+            df = df_test
+        # If the split values stays constant within one patient, we can also take the training and validation set
+        # into the ood test set since this does not imply having the same patient in training / test set
+        # TODO: should we really do it like this?
+        else:
+            df_train = pd.read_json(data_dir / "train.json")
+            df_train = df_train.loc[df_train[split_category] == split_value]
+            df_val = pd.read_json(data_dir / "validate.json")
+            df_val = df_val.loc[df_val[split_category] == split_value]
+            df = pd.concat([df_test, df_train, df_val])
+    return df
+
+
 def get_datamodule(data_dir:Path, name:str, batch_size:int):
     json_file = get_json_filename(data_dir, name)
     df = pd.read_json(json_file)
     dataset = name.split("_")[0]
     if dataset == "slake":
+        return SlakeDatamodule(data_dir=data_dir, batch_size=batch_size, df=df)
+    elif dataset == "ovqa":
         return SlakeDatamodule(data_dir=data_dir, batch_size=batch_size, df=df)
     else:
         raise NotImplementedError(f"Dataset {dataset} not implemented")
@@ -122,9 +155,43 @@ def convert_raw_to_final(df, save_path):
         json.dump(final_data, output_file, indent=4)
 
 
+def convert_ovqa_raw_to_final(df, save_path):
+    final_data = []
+
+    # Process each entry as a separate conversation
+    for _, row in df.iterrows():
+        qid = row["qid"]
+        new_entry = {
+            "id": str(qid),
+            "image": f"img/" + row["image_name"],
+            "conversations": [
+                {
+                    "from": "human",
+                    "value": row["question"]
+                },
+                {
+                    "from": "gpt",
+                    "value": row["answer"]
+                }
+            ],
+            "img_id": row["image_name"].split(".")[0],
+            "location": row["image_organ"],
+            # TODO: we somehow need to add modality
+            #"modality": row["modality"],
+            "answer_type": row["answer_type"],
+            "content_type": row["question_type"],
+        }
+        final_data.append(new_entry)
+
+    with open(str(save_path), 'w') as output_file:
+        json.dump(final_data, output_file, indent=4)
+
 def get_json_filename(data_dir:Path, name:str):
     identifier = name.split("_")
     dataset = identifier[0]
+    if not os.path.isdir(data_dir / "split_files"):
+        os.makedirs(data_dir / "split_files")
+
     if os.path.isfile(data_dir / "split_files" / f"{name}.json"):
         return data_dir / "split_files" / f"{name}.json"
     else:
@@ -139,7 +206,12 @@ def get_json_filename(data_dir:Path, name:str):
         if dataset == "slake":
             df = get_slake_df(data_dir=data_dir, mode=mode, split=split, split_category=split_category,
                               split_value=split_value)
+            convert_raw_to_final(df, data_dir / "split_files" / f"{name}.json")
+        elif dataset == "ovqa":
+            df = get_ovqa_df(data_dir=data_dir, mode=mode, split=split, split_category=split_category,
+                             split_value=split_value)
+            convert_ovqa_raw_to_final(df, data_dir / "split_files" / f"{name}.json")
         else:
             raise NotImplementedError(f"Dataset {dataset} not implemented")
-        convert_raw_to_final(df, data_dir / "split_files" / f"{name}.json")
+
         return data_dir / "split_files" / f"{name}.json"
