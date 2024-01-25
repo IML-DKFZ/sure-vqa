@@ -2,8 +2,8 @@ from pathlib import Path
 
 from llava.train.train import *
 
-from med_vlm_robustness.datamodule import get_json_filename
-from med_vlm_robustness.utils import get_config
+from datamodule import get_json_filename
+from utils import get_config
 
 
 def main(cfg):

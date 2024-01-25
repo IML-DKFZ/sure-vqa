@@ -7,7 +7,7 @@ import pandas as pd
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader
 
-from med_vlm_robustness.dataset import SlakeDataset
+from dataset import SlakeDataset
 
 
 class SlakeDatamodule(pl.LightningDataModule):

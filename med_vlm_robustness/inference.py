@@ -2,10 +2,10 @@ from pathlib import Path
 
 import torch.cuda
 
-from med_vlm_robustness.datamodule import get_datamodule
-from med_vlm_robustness.model import LLaVA_Med
+from datamodule import get_datamodule
+from model import LLaVA_Med
 from pytorch_lightning import Trainer
-from med_vlm_robustness.utils import get_config
+from utils import get_config
 
 
 def main(cfg):
