@@ -1,0 +1,9 @@
+data_root_dir: ${oc.env:DATASET_ROOT_DIR}
+dataset: "Slake"
+split_file: "slake_test_ood_modality_X-Ray"
+data_dir: ${data_root_dir}/${dataset}
+split_file_train: "slake_train_all"
+model_path: ${oc.env:EXPERIMENT_ROOT_DIR}/${dataset}/LoRA/llava-${split_file_train}-finetune_lora
+model_base: "liuhaotian/llava-v1.5-7b"
+model_output_file: ${model_path}/eval/${split_file}/test_results.json
+metrics_file: ${model_path}/metrics/${split_file}/evaluated_metrics.json

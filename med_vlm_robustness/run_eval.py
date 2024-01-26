@@ -4,10 +4,13 @@ import collections
 import random
 import pandas as pd
 from nltk.translate.bleu_score import sentence_bleu
-from eval_metrics import calculate_exactmatch, calculate_f1score, bleu, \
+from eval.eval_metrics import calculate_exactmatch, calculate_f1score, bleu, \
     calculate_appearance_with_normalization
-from glossary import *
+from eval.glossary import *
 
+from pathlib import Path
+from utils import get_config
+import os
 import warnings
 
 warnings.simplefilter('ignore')
@@ -63,8 +66,8 @@ def evaluate(gt, pred, answer_type):
         }
 
 
-def main():
-    pred_df = pd.read_json("/nvme/VLMRobustness/test_results.json")
+def main(cfg):
+    pred_df = pd.read_json(cfg.model_output_file)
     results = []
     #iterate dataframe
     for _, row in pred_df.iterrows():
@@ -79,12 +82,12 @@ def main():
             "metrics": metrics_dict,
         })
 
-    with open("/nvme/VLMRobustness/metrics.json", 'w') as f:
+    if not Path(cfg.metrics_file).parent.is_dir():
+        os.makedirs(Path(cfg.metrics_file).parent)
+    with open(cfg.metrics_file, 'w') as f:
         json.dump(results, f, indent=4, sort_keys=True)
 
 
 if __name__ == '__main__':
-    # TODO add args
-    #args = parse_option()
-    #main(args)
-    main()
+    config = get_config()
+    main(config)
