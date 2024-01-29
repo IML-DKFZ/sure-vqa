@@ -11,6 +11,8 @@ output_whole_text.json
 # Data
 Slake
 
+# Notebooks
+*.ipynb
 
 ### General ignored files
 
