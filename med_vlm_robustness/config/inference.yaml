@@ -4,7 +4,9 @@ split_file: "slake_test_ood_modality_X-Ray"
 data_dir: ${data_root_dir}/${dataset}
 split_file_train: "slake_train_all"
 model_path: ${oc.env:EXPERIMENT_ROOT_DIR}/${dataset}/LoRA/llava-${split_file_train}-finetune_lora
-model_base: "liuhaotian/llava-v1.5-7b"
+
+# set the base model with the llava_med pretrained weights
+model_base: ${oc.env:LLAVA_MED_MODEL_PATH}
 output_file: ${model_path}/eval/${split_file}/test_results.json
 max_new_tokens: 100
 num_workers: 24
