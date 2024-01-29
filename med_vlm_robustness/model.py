@@ -31,12 +31,11 @@ from llava.conversation import conv_templates, SeparatorStyle
 class LLaVA_Med(pl.LightningModule):
     def __init__(self, cfg):
         super().__init__()
-
-        # TODO: update with actual llava weights, not only delta
         disable_torch_init()
         self.model_path = cfg.model_path
         self.model_base = cfg.model_base
         self.model_name = get_model_name_from_path(self.model_path)
+        self.max_new_token = cfg.max_new_tokens
 
         self.tokenizer, self.model, self.image_processor, self.context_len = load_pretrained_model(
             model_path=self.model_path,
@@ -104,6 +103,7 @@ class LLaVA_Med(pl.LightningModule):
                 images=images,
                 use_cache=True,
                 stopping_criteria=[stopping_criteria],
+                max_new_tokens=self.max_new_token,
             )
         # TODO: change it to this later
         # with torch.inference_mode():

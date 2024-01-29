@@ -10,7 +10,7 @@ from utils import get_config
 
 def main(cfg):
     llava = LLaVA_Med(cfg)
-    dm = get_datamodule(Path(cfg.data_dir), cfg.split_file, batch_size=1)
+    dm = get_datamodule(Path(cfg.data_dir), cfg.split_file, batch_size=1, num_workers=cfg.num_workers)
     dm.setup()
 
     trainer = Trainer(accelerator="gpu" if torch.cuda.is_available() else "cpu")

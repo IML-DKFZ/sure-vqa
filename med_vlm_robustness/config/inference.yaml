@@ -6,3 +6,5 @@ split_file_train: "slake_train_all"
 model_path: ${oc.env:EXPERIMENT_ROOT_DIR}/${dataset}/LoRA/llava-${split_file_train}-finetune_lora
 model_base: "liuhaotian/llava-v1.5-7b"
 output_file: ${model_path}/eval/${split_file}/test_results.json
+max_new_tokens: 100
+num_workers: 24

@@ -110,13 +110,14 @@ def get_ovqa_df(data_dir, mode, split, split_category=None, split_value=None):
     return df
 
 
-def get_datamodule(data_dir:Path, name:str, batch_size:int):
+def get_datamodule(data_dir:Path, name:str, batch_size:int, num_workers:int = 0):
     json_file = get_json_filename(data_dir, name)
     df = pd.read_json(json_file)
     dataset = name.split("_")[0]
     if dataset == "slake":
-        return SlakeDatamodule(data_dir=data_dir, batch_size=batch_size, df=df)
+        return SlakeDatamodule(data_dir=data_dir, batch_size=batch_size, df=df, num_workers=num_workers)
     elif dataset == "ovqa":
+        # TODO: Add num_workers here too
         return SlakeDatamodule(data_dir=data_dir, batch_size=batch_size, df=df)
     else:
         raise NotImplementedError(f"Dataset {dataset} not implemented")
