@@ -4,10 +4,10 @@ split_file: "slake_test_ood_modality_X-Ray"
 data_dir: ${data_root_dir}/${dataset}
 # split_file_train: "slake_train_all"
 split_file_train: "slake_train_iid_modality_X-Ray" # take the model checkpoint finetuned on iid train set
-model_path: ${oc.env:EXPERIMENT_ROOT_DIR}/${dataset}/LoRA/llava-${split_file_train}-finetune_lora
+model_path: ${oc.env:LLAVA_MED_MODEL_PATH}
 
 # set the base model with the llava_med pretrained weights
-model_base: ${oc.env:LLAVA_MED_MODEL_PATH}
-output_file: ${model_path}/eval/${split_file}/test_results.json
+model_base: null
+output_file: ${oc.env:EXPERIMENT_ROOT_DIR}/${dataset}/Pretrained/eval/${split_file}/test_results.json 
 max_new_tokens: 100
 num_workers: 24

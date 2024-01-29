@@ -9,7 +9,7 @@ def get_config():
         "-c",
         "--config",
         type=str,
-        default="config/training_defaults.yaml",
+        default="med_vlm_robustness/med_vlm_robustness/config/training_defaults.yaml",
         help="Config file to use",
     )
     parser.add_argument("--overrides", nargs='+', help="Specify key-value pairs to override")
