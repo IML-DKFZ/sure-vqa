@@ -14,6 +14,9 @@ Slake
 # Notebooks
 *.ipynb
 
+# Scripts folder
+Scripts
+
 ### General ignored files
 
 # Byte-compiled / optimized / DLL files

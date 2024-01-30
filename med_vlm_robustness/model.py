@@ -95,7 +95,7 @@ class LLaVA_Med(pl.LightningModule):
         # set up the stopping string by using variables of the class
         stop_str = conv.sep if conv.sep_style != SeparatorStyle.TWO else conv.sep2
         # add stopping strings to stop model when it tries to generate aditional conversations after giving the answer
-        keywords = keywords = [stop_str, "###", "\n"]
+        keywords = [stop_str, "###", "\n"]
         stopping_criteria = KeywordsStoppingCriteria(keywords, self.tokenizer, input_ids)
 
         with torch.inference_mode():
