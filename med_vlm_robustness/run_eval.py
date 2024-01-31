@@ -65,27 +65,73 @@ def evaluate(gt, pred, answer_type):
             'bleu_score_3': b_score_3
         }
 
-
 def main(cfg):
+    # set the params to calculate the average
+    num_closed_qs=0
+    num_open_qs=0
+    sum_yes_no_acc=0
+    sum_exact_match_score=0
+    sum_f1_score=0
+    sum_prec=0
+    sum_recall=0
+    sum_bleu=0
+    sum_bleu_1=0
+    sum_bleu_2=0
+    sum_bleu_3=0
+
     pred_df = pd.read_json(cfg.model_output_file)
     results = []
+
     #iterate dataframe
     for _, row in pred_df.iterrows():
         pred = row['pred']
         gt = row['gt']
-        pred = row['pred']
+        pred = row['pred'] #  TODO: why is this twice???
         answer_type = row['answer_type']
         metrics_dict = evaluate(gt=gt, pred=pred, answer_type=answer_type)
+
+        # TODO: TEST this
+        if answer_type == "CLOSED":
+            num_closed_qs += 1
+            sum_yes_no_acc += metrics_dict["yes/no accuracy"]
+        else:
+            num_open_qs += 1
+            sum_exact_match_score += metrics_dict['exact match score']
+            sum_f1_score += metrics_dict['f1 score']
+            sum_prec += metrics_dict['precision']
+            sum_recall += metrics_dict['recall']
+            sum_bleu += metrics_dict['bleu_score']
+            sum_bleu_1 += metrics_dict['bleu_score_1']
+            sum_bleu_2 += metrics_dict['bleu_score_2']
+            sum_bleu_3 += metrics_dict['bleu_score_3']
+
         results.append({
             "qid": row['qid'],
             "answer_type": answer_type,
             "metrics": metrics_dict,
         })
 
+    average_scores = {
+        'avg_yes_no_acc': sum_yes_no_acc / num_closed_qs,
+        'avg_exact match score': sum_exact_match_score / num_open_qs,
+        'avg_f1 score': sum_f1_score / num_open_qs,
+        'avg_precision': sum_prec / num_open_qs,
+        'avg_recall': sum_recall / num_open_qs,
+        'avg_bleu_score': sum_bleu / num_open_qs,
+        'avg_bleu_score_1': sum_bleu_1 / num_open_qs,
+        'avg_bleu_score_2': sum_bleu_2 / num_open_qs,
+        'avg_bleu_score_3':  sum_bleu_3   / num_open_qs,
+        }
+    
     if not Path(cfg.metrics_file).parent.is_dir():
         os.makedirs(Path(cfg.metrics_file).parent)
     with open(cfg.metrics_file, 'w') as f:
         json.dump(results, f, indent=4, sort_keys=True)
+
+    if not Path(cfg.averaged_metrics_file).parent.is_dir():
+        os.makedirs(Path(cfg.averaged_metrics_file).parent)
+    with open(cfg.averaged_metrics_file, 'w') as f:
+        json.dump(average_scores, f, indent=4, sort_keys=True)
 
 
 if __name__ == '__main__':
