@@ -4,6 +4,7 @@ import json
 import torch
 import ndjson
 from tqdm import tqdm
+from pathlib import Path
 
 from utils import get_config
 
@@ -45,8 +46,10 @@ def mistal_eval(config):
         mistral_output_list.append(json.dumps(outputs))
 
     # save mistral evaluation as JSON
-    with open(mistral_eval_file, 'w') as f:
-        ndjson.dump(mistral_output_list, f)
+    if not Path(mistral_eval_file).parent.is_dir():
+        os.makedirs(Path(mistral_eval_file).parent)
+    with open(mistral_eval_file, 'w') as json_file:
+        json.dump(mistral_output_list,json_file, indent=2)
 
 if __name__ == '__main__':
     config = get_config()
