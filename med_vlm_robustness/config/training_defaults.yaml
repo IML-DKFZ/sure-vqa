@@ -11,39 +11,41 @@ training_args:
   lora_enable: true
   lora_r: 128
   lora_alpha: 256
-  mm_projector_lr: 2e-5
+  # mm_projector_lr: 2e-5
   image_aspect_ratio: "pad"
   group_by_modality_length: true
   bf16: true
   # output dir
   num_train_epochs: 1
-  per_device_train_batch_size: 16
-  per_device_eval_batch_size: 4
+  per_device_train_batch_size: 1
+  per_device_eval_batch_size: 1
   gradient_accumulation_steps: 1
   evaluation_strategy: "no"
   save_strategy: "steps"
-  save_steps: 50000
-  save_total_limit: 1
-  learning_rate: 2e-4
+  save_steps: 500
+  save_total_limit: 3
+  learning_rate: 2e-5
   weight_decay: 0.
   warmup_ratio: 0.03
   lr_scheduler_type: "cosine"
   logging_steps: 1
   tf32: true
-  model_max_length: 2048
+  model_max_length: 1024
   gradient_checkpointing: true
   dataloader_num_workers: 4
   lazy_preprocess: true
+  tune_mm_mlp_adapter: True
 
 model_args:
   # model_name_or_path: "liuhaotian/llava-v1.5-7b"
   model_name_or_path: ${oc.env:LLAVA_MED_MODEL_PATH}
   # version: "v1"
   version: "v0"
-  vision_tower: "openai/clip-vit-large-patch14-336"
-  mm_projector_type: "mlp2x_gelu"
-  mm_vision_select_layer: -2
-  mm_use_im_start_end: false
+  # vision_tower: "openai/clip-vit-large-patch14-336"
+  vision_tower: "openai/clip-vit-large-patch14"
+  # mm_projector_type: "mlp2x_gelu"   # DANGER ZONE! This changes the architecture compared to the checkpoint...
+  mm_vision_select_layer: -2        # What does this even mean?
+  mm_use_im_start_end: true
   mm_use_im_patch_token: false
 
 
