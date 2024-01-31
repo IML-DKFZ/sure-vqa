@@ -51,11 +51,25 @@ def mistal_eval(config):
         )[0]
         outputs = outputs.strip()
 
-        # find the score value in th emodel output
-        score_search_obj=re.search("###mistralscore=(.*)###",outputs)
-        mistral_score=score_search_obj.group(1)
+        # find the score value in the model output
+        try:
+            score_obj = re.search("###mistralscore=(.*)###", outputs)
+            if score_obj:
+                mistral_score = float(score_obj.group(1))
+            else:
+                # Handle the case where the pattern is not found in the outputs
+                # make the mistral score store the complete output so that it can be analyzed later
+                mistral_score = outputs
+                print("Mistral score not found.")
+                print("The Mistral score for this instance will be assigned to the complete output of the Mistral model.")
+                print("Inspect this in the output JSON file")
+        except AttributeError:
+            # Handle other potential attribute errors, e.g., group not found
+            print("Error while finding the mistral score")
+        except TypeError:
+            # handle the case where the mistral score is not numeric therefore it cannot be converted to int() 
+            print("Retrieved mistral score object is being covnerted to float but it is not an integer")
 
-        # TODO: add try catch
         # create a dict from including the mdoel score
         output_dict={
             "qid": qid,
@@ -63,15 +77,14 @@ def mistal_eval(config):
             "gt": gt,
             "pred": pred,
             "answer_type": answer_type,
-            "mistral_score": int(mistral_score)
+            "mistral_score": mistral_score
         }
         mistral_output_list.append(output_dict)
-        break
 
     # save mistral evaluation as JSON
     if not Path(mistral_eval_file).parent.is_dir():
         os.makedirs(Path(mistral_eval_file).parent)
-    with open("deneme", 'w') as json_file:
+    with open(mistral_eval_file, 'w') as json_file:
         json.dump(mistral_output_list, json_file, indent=4)
 
 if __name__ == '__main__':
