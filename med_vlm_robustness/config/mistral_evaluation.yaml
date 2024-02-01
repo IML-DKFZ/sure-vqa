@@ -11,3 +11,4 @@ model_base: ${oc.env:LLAVA_MED_MODEL_PATH}
 model_output_file: ${model_path}/eval/${split_file}/test_results.json
 # metrics_file: ${model_path}/metrics/${split_file}/evaluated_metrics.json
 metrics_file: ${model_path}/metrics/${split_file}/mistral_metrics.json
+averaged_metrics_file: ${model_path}/metrics/${split_file}/averaged_mistral_metrics.json

@@ -63,12 +63,13 @@ def mistal_eval(config):
                 print("Mistral score not found.")
                 print("The Mistral score for this instance will be assigned to the complete output of the Mistral model.")
                 print("Inspect this in the output JSON file")
-        except AttributeError:
+        except AttributeError as e:
             # Handle other potential attribute errors, e.g., group not found
             print("Error while finding the mistral score")
+            raise e
         except TypeError:
             # handle the case where the mistral score is not numeric therefore it cannot be converted to int() 
-            print("Retrieved mistral score object is being covnerted to float but it is not an integer")
+            print("Retrieved mistral score object is being converted to float but it is not an integer")
 
         # create a dict from including the mdoel score
         output_dict={
@@ -87,6 +88,47 @@ def mistal_eval(config):
     with open(mistral_eval_file, 'w') as json_file:
         json.dump(mistral_output_list, json_file, indent=4)
 
+def average_mistral_metrics(cfg):
+
+    with open(config.metrics_file,'r') as f:
+        json_file = f.read()
+    mistral_output_file = json.loads(json_file)
+
+    sum_yes_no_score = 0
+    sum_open_ended_score = 0
+    num_open_qs=0
+    num_closed_qs=0
+    for object in mistral_output_file:
+        question_id = object["qid"]
+        answer_type=object["answer_type"]
+        mistral_score=object["mistral_score"]
+
+        try:
+            mistral_float_score = float(mistral_score)
+
+            if answer_type == "CLOSED":
+                sum_yes_no_score += mistral_float_score
+                num_closed_qs += 1
+            else:
+                sum_open_ended_score += mistral_float_score
+                num_open_qs += 1
+        
+        except ValueError:
+            print(f"mistral score is not numeric for the question id {question_id}, this instance will be skipped during average mistral score calculation")
+            print("If this is not desired, check the mistral metrics JSON file to fix the error")
+
+    average_scores = {
+        'avg_yes_no_acc': sum_yes_no_score / num_closed_qs,
+        "avg_open_ended_acc": sum_open_ended_score / num_open_qs
+        }
+
+    if not Path(cfg.averaged_metrics_file).parent.is_dir():
+        os.makedirs(Path(cfg.averaged_metrics_file).parent)
+    with open(cfg.averaged_metrics_file, 'w') as f:
+        json.dump(average_scores, f, indent=4, sort_keys=True)
+
+
 if __name__ == '__main__':
     config = get_config()
     mistal_eval(config)
+    average_mistral_metrics(config)
