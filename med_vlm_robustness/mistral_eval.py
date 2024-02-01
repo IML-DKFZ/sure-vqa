@@ -51,25 +51,25 @@ def mistal_eval(config):
         )[0]
         outputs = outputs.strip()
 
-        # find the score value in the model output
         try:
+            # get the score value in the model output
             score_obj = re.search("###mistralscore=(.*)###", outputs)
-            if score_obj:
-                mistral_score = float(score_obj.group(1))
-            else:
-                # Handle the case where the pattern is not found in the outputs
-                # make the mistral score store the complete output so that it can be analyzed later
-                mistral_score = outputs
-                print("Mistral score not found.")
-                print("The Mistral score for this instance will be assigned to the complete output of the Mistral model.")
-                print("Inspect this in the output JSON file")
-        except AttributeError as e:
-            # Handle other potential attribute errors, e.g., group not found
-            print("Error while finding the mistral score")
-            raise e
-        except TypeError:
-            # handle the case where the mistral score is not numeric therefore it cannot be converted to int() 
-            print("Retrieved mistral score object is being converted to float but it is not an integer")
+            score_obj_float= float(score_obj.group(1))
+            mistral_score = score_obj_float
+        except ValueError:
+            # Handle the case where the pattern is not found in the outputs
+            # Where the mistral score is not numeric therefore it cannot be converted to float() 
+            # Make the mistral score store the complete output so that it can be analyzed later
+            print("Retrieved mistral score object is being converted to float but it is not numeric")
+            print(f"Mistral score for the instance {qid} will be assigned to the complete text output of the Mistral model.")
+            print("Inspect this in the output JSON file")
+            mistral_score = outputs
+        except Exception as e:
+            # Handle other potential errors
+            print(f"Mistral score for the instance {qid} will be assigned to the complete text output of the Mistral model.")
+            print("Inspect this in the output JSON file")
+            print("This is the original error message:\n", e)
+            mistral_score = outputs
 
         # create a dict from including the mdoel score
         output_dict={
@@ -112,7 +112,6 @@ def average_mistral_metrics(cfg):
             else:
                 sum_open_ended_score += mistral_float_score
                 num_open_qs += 1
-        
         except ValueError:
             print(f"mistral score is not numeric for the question id {question_id}, this instance will be skipped during average mistral score calculation")
             print("If this is not desired, check the mistral metrics JSON file to fix the error")
