@@ -21,3 +21,6 @@ Once you have set your key you need to run the following before starting the pro
 ```shell
 source .env 
 ```
+
+## Setting up OVQA Dataset
+- change the train, val and test set names as test.json train.json validate.json

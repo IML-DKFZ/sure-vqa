@@ -1,0 +1,12 @@
+data_root_dir: ${oc.env:DATASET_ROOT_DIR}
+dataset: "Slake"
+split_file: "slake_test_ood_modality_X-Ray"
+data_dir: ${data_root_dir}/${dataset}
+split_file_train: "slake_train_iid_modality_X-Ray" # take the model checkpoint finetuned on iid train set
+model_path: ${oc.env:LLAVA_MED_MODEL_PATH}
+
+# set the base model with the llava_med pretrained weights
+model_base: null
+model_output_file: ${oc.env:EXPERIMENT_ROOT_DIR}/${dataset}/Pretrained/eval/${split_file}/test_results.json
+metrics_file:  ${oc.env:EXPERIMENT_ROOT_DIR}/${dataset}/Pretrained/metrics/${split_file}/traditional_metrics.json
+averaged_metrics_file: ${oc.env:EXPERIMENT_ROOT_DIR}/${dataset}/Pretrained/metrics/${split_file}/averaged_traditional_metrics.json

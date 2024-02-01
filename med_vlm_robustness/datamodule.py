@@ -81,8 +81,15 @@ def get_slake_df(data_dir, mode, split, split_category=None, split_value=None):
 
 def get_ovqa_df(data_dir, mode, split, split_category=None, split_value=None):
     if split_category == "question_type":
-        split_value = split_value.capitalize()
+        split_value_divided = split_value.split("_")
+        split_value = split_value_divided[0].capitalize()
+        # if the split category contains words comnbined with "_"
+        # separate the words and capitalize them 
+        # TODO: check if there is a better way to do this
+        for index in range(1,len(split_value_divided)):
+            split_value += " " + split_value_divided[index].capitalize()
     elif split_category == "image_organ":
+        # TODO: Check if we need to split the words as above
         split_value = split_value.upper()
 
     df = pd.read_json(data_dir / f"{mode}.json")
@@ -96,7 +103,7 @@ def get_ovqa_df(data_dir, mode, split, split_category=None, split_value=None):
         df_test = df.loc[df[split_category] == split_value]
         # If the split value changes within one patient, we only filter the test set,
         # since otherwise we might have the same patient / image within training and test set
-        if split_category in ["answer_type", "content_type"]:
+        if split_category in ["question_type"]: # there are no duplicates in "image_organ"
             df = df_test
         # If the split values stays constant within one patient, we can also take the training and validation set
         # into the ood test set since this does not imply having the same patient in training / test set
@@ -117,8 +124,8 @@ def get_datamodule(data_dir:Path, name:str, batch_size:int, num_workers:int = 0)
     if dataset == "slake":
         return SlakeDatamodule(data_dir=data_dir, batch_size=batch_size, df=df, num_workers=num_workers)
     elif dataset == "ovqa":
-        # TODO: Add num_workers here too
-        return SlakeDatamodule(data_dir=data_dir, batch_size=batch_size, df=df)
+        # TODO : rename this as datamodule
+        return SlakeDatamodule(data_dir=data_dir, batch_size=batch_size, df=df, num_workers=num_workers)
     else:
         raise NotImplementedError(f"Dataset {dataset} not implemented")
 
@@ -200,7 +207,7 @@ def get_json_filename(data_dir:Path, name:str):
         split = identifier[2]
         if split != "all":
             split_category = identifier[3].replace("-", "_")
-            split_value = identifier[4]
+            split_value = identifier[4].replace("-", "_")
         else:
             split_category = None
             split_value = None

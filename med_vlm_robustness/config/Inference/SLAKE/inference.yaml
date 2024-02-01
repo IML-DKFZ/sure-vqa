@@ -11,3 +11,11 @@ model_base: ${oc.env:LLAVA_MED_MODEL_PATH}
 output_file: ${model_path}/eval/${split_file}/test_results.json
 max_new_tokens: 100
 num_workers: 24
+
+model_args:
+  # vision_tower: "openai/clip-vit-large-patch14-336"
+  vision_tower: "openai/clip-vit-large-patch14"
+  # mm_projector_type: "mlp2x_gelu"   # DANGER ZONE! This changes the architecture compared to the checkpoint...
+  mm_vision_select_layer: -2        # What does this even mean?
+  mm_use_im_start_end: true
+  mm_use_im_patch_token: false

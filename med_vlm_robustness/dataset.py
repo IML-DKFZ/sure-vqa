@@ -25,6 +25,7 @@ class SlakeDataset(Dataset):
             if answer in ["Yes", "No", "yes", "no"]:
                 question += " Please choose from the following two options: [yes, no]."
             # TODO: with llm eval we should not include this, right?
+            # TODO : code below should be used to make sure that categorical questions are not counted as CLOSED
             # else:
             #     answer_type = "OPEN"
         batch = {
