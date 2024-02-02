@@ -121,9 +121,9 @@ def get_datamodule(data_dir:Path, name:str, batch_size:int, num_workers:int = 0)
     json_file = get_json_filename(data_dir, name)
     df = pd.read_json(json_file)
     dataset = name.split("_")[0]
-    if dataset == "slake":
+    if dataset == "SLAKE":
         return SlakeDatamodule(data_dir=data_dir, batch_size=batch_size, df=df, num_workers=num_workers)
-    elif dataset == "ovqa":
+    elif dataset == "OVQA":
         # TODO : rename this as datamodule
         return SlakeDatamodule(data_dir=data_dir, batch_size=batch_size, df=df, num_workers=num_workers)
     else:
@@ -211,11 +211,11 @@ def get_json_filename(data_dir:Path, name:str):
         else:
             split_category = None
             split_value = None
-        if dataset == "slake":
+        if dataset == "SLAKE":
             df = get_slake_df(data_dir=data_dir, mode=mode, split=split, split_category=split_category,
                               split_value=split_value)
             convert_raw_to_final(df, data_dir / "split_files" / f"{name}.json")
-        elif dataset == "ovqa":
+        elif dataset == "OVQA":
             df = get_ovqa_df(data_dir=data_dir, mode=mode, split=split, split_category=split_category,
                              split_value=split_value)
             convert_ovqa_raw_to_final(df, data_dir / "split_files" / f"{name}.json")

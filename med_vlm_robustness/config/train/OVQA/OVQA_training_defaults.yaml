@@ -1,8 +1,14 @@
 data_root_dir: ${oc.env:DATASET_ROOT_DIR}
 dataset: "OVQA"
-split_file: "ovqa_train_iid_question-type_attribute-other"
+data_shift: "question-type"
+ood_value: "attribute-other"
+train_iid_ood: "iid"
+model_params_from: "LoRA"
+split_file: "${dataset}_train_${train_iid_ood}_${data_shift}_${ood_value}"
+# split_file: "ovqa_train_iid_question-type_attribute-other"
 data_dir: ${data_root_dir}/${dataset}
-output_dir: ${oc.env:EXPERIMENT_ROOT_DIR}/${dataset}/LoRA/llava-${split_file}-finetune_lora
+output_dir: ${oc.env:EXPERIMENT_ROOT_DIR}/${dataset}/${model_params_from}/llava-${split_file}
+# /home/localuser/Desktop/projects/Experiments/LLAVA_MED/TEST/OVQA/LoRA/llava-OVQA_train_iid_question-type_attribute-other
 
 
 training_args:
