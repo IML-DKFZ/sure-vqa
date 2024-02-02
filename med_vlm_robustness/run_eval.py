@@ -32,13 +32,18 @@ def evaluate(gt, pred, answer_type):
 
     if answer_type == "CLOSED":
         # for close-ended question (Yes/No)
-        if 'yes' in pred or 'no' in pred:
-            if gt in pred:
-                yes_no_acc = 1
-            else:
-                yes_no_acc = 0
+        if gt in pred:
+            yes_no_acc = 1
         else:
             yes_no_acc = 0
+        # TODO: discuss if this males sense
+        # if 'yes' in pred or 'no' in pred:
+        #     if gt in pred:
+        #         yes_no_acc = 1
+        #     else:
+        #         yes_no_acc = 0
+        # else:
+        #     # yes_no_acc = 0
         return {
             "yes/no accuracy": yes_no_acc
         }
@@ -112,15 +117,15 @@ def main(cfg):
         })
 
     average_scores = {
-        'avg_yes_no_acc': sum_yes_no_acc / num_closed_qs,
-        'avg_exact match score': sum_exact_match_score / num_open_qs,
-        'avg_f1 score': sum_f1_score / num_open_qs,
-        'avg_precision': sum_prec / num_open_qs,
-        'avg_recall': sum_recall / num_open_qs,
-        'avg_bleu_score': sum_bleu / num_open_qs,
-        'avg_bleu_score_1': sum_bleu_1 / num_open_qs,
-        'avg_bleu_score_2': sum_bleu_2 / num_open_qs,
-        'avg_bleu_score_3':  sum_bleu_3   / num_open_qs,
+        'avg_yes_no_acc': sum_yes_no_acc / max(num_closed_qs,1), # if num_closed_qs = 0, set it to 1 otherwise division by zero error 
+        'avg_exact match score': sum_exact_match_score / max(num_open_qs, 1),
+        'avg_f1 score': sum_f1_score / max(num_open_qs, 1),
+        'avg_precision': sum_prec / max(num_open_qs, 1),
+        'avg_recall': sum_recall / max(num_open_qs, 1),
+        'avg_bleu_score': sum_bleu / max(num_open_qs, 1),
+        'avg_bleu_score_1': sum_bleu_1 / max(num_open_qs, 1),
+        'avg_bleu_score_2': sum_bleu_2 / max(num_open_qs, 1),
+        'avg_bleu_score_3':  sum_bleu_3   / max(num_open_qs, 1),
         }
     
     if not Path(cfg.metrics_file).parent.is_dir():

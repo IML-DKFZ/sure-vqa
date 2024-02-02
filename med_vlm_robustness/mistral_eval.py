@@ -117,8 +117,8 @@ def average_mistral_metrics(cfg):
             print("If this is not desired, check the mistral metrics JSON file to fix the error")
 
     average_scores = {
-        'avg_yes_no_acc': sum_yes_no_score / num_closed_qs,
-        "avg_open_ended_acc": sum_open_ended_score / num_open_qs
+        'avg_yes_no_acc': sum_yes_no_score / max(1, num_closed_qs), # workaround to make sure there is no zero division error
+        "avg_open_ended_acc": sum_open_ended_score / max(1, num_open_qs)
         }
 
     if not Path(cfg.averaged_metrics_file).parent.is_dir():
