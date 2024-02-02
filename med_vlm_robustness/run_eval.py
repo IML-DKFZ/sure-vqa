@@ -51,14 +51,27 @@ def evaluate(gt, pred, answer_type):
     else:
         exact_score = calculate_exactmatch(pred, gt)
         f1_score, precision, recall = calculate_f1score(pred, gt)
+        # b_score = sentence_bleu(references=[str(gt).lower().split()],
+        #                         hypothesis=str(pred).lower().split())
+        # b_score_1 = sentence_bleu(references=[str(gt).lower().split()],
+        #                           hypothesis=str(pred).lower().split(), weights=(1, 0, 0, 0))
+        # b_score_2 = sentence_bleu(references=[str(gt).lower().split()],
+        #                           hypothesis=str(pred).lower().split(), weights=(0, 1, 0, 0))
+        # b_score_3 = sentence_bleu(references=[str(gt).lower().split()],
+        #                           hypothesis=str(pred).lower().split(), weights=(0, 0, 1, 0))
+        # TODO: isnt this the right calculation
         b_score = sentence_bleu(references=[str(gt).lower().split()],
-                                hypothesis=str(pred).lower().split())
+                                hypothesis=str(pred).lower().split(), weights=[1])
         b_score_1 = sentence_bleu(references=[str(gt).lower().split()],
-                                  hypothesis=str(pred).lower().split(), weights=(1, 0, 0, 0))
+                                    hypothesis=str(pred).lower().split(), weights=[1])
         b_score_2 = sentence_bleu(references=[str(gt).lower().split()],
-                                  hypothesis=str(pred).lower().split(), weights=(0, 1, 0, 0))
+                                    hypothesis=str(pred).lower().split(), weights=(1/2, 1/2))
         b_score_3 = sentence_bleu(references=[str(gt).lower().split()],
-                                  hypothesis=str(pred).lower().split(), weights=(0, 0, 1, 0))
+                                    hypothesis=str(pred).lower().split(), weights=(1/2, 1/2, 1/2))
+        # Bleu from Llava-Med paper
+        # llava_b_score = bleu(pred.lower(), gt.lower(), n=1, weights=[1])
+        # llava_b_score_2 = bleu(pred.lower(), gt.lower(), n=2, weights=[1/2,1/2])
+        # llava_b_score_3 = bleu(pred.lower(), gt.lower(), n=3, weights=[1/3,1/3,1/3])
         return {
             'exact match score': exact_score,
             'f1 score': f1_score,
@@ -67,7 +80,10 @@ def evaluate(gt, pred, answer_type):
             'bleu_score': b_score,
             'bleu_score_1': b_score_1,
             'bleu_score_2': b_score_2,
-            'bleu_score_3': b_score_3
+            'bleu_score_3': b_score_3,
+            # "llava_bleu_score": float(llava_b_score),
+            # "llava_bleu_score_2": float(llava_b_score_2),
+            # "llava_bleu_score_3": float(llava_b_score_3),
         }
 
 def main(cfg):
@@ -83,6 +99,9 @@ def main(cfg):
     sum_bleu_1=0
     sum_bleu_2=0
     sum_bleu_3=0
+    # sum_llava_bleu=0
+    # sum_llava_bleu_2=0
+    # sum_llava_bleu_3=0
 
     pred_df = pd.read_json(cfg.model_output_file)
     results = []
@@ -109,6 +128,10 @@ def main(cfg):
             sum_bleu_1 += metrics_dict['bleu_score_1']
             sum_bleu_2 += metrics_dict['bleu_score_2']
             sum_bleu_3 += metrics_dict['bleu_score_3']
+            # sum_llava_bleu += metrics_dict["llava_bleu_score"]
+            # sum_llava_bleu_2 += metrics_dict["llava_bleu_score_2"]
+            # sum_llava_bleu_3 += metrics_dict["llava_bleu_score_3"]
+
 
         results.append({
             "qid": row['qid'],
@@ -126,6 +149,9 @@ def main(cfg):
         'avg_bleu_score_1': sum_bleu_1 / max(num_open_qs, 1),
         'avg_bleu_score_2': sum_bleu_2 / max(num_open_qs, 1),
         'avg_bleu_score_3':  sum_bleu_3   / max(num_open_qs, 1),
+        # "avg_llava_bleu_score":   sum_llava_bleu / max(num_open_qs, 1),
+        # "avg_llava_bleu_score_2": sum_llava_bleu_2/ max(num_open_qs, 1),
+        # "avg_llava_bleu_score_3": sum_llava_bleu_3/ max(num_open_qs, 1),
         }
     
     if not Path(cfg.metrics_file).parent.is_dir():
