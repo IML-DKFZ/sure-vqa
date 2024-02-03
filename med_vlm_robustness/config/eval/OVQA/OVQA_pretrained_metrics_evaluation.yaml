@@ -1,0 +1,20 @@
+data_root_dir: ${oc.env:DATASET_ROOT_DIR}
+dataset: "OVQA"
+data_shift: "question-type"
+ood_value: "attribute-other"
+train_iid_ood: "iid"
+inference_on_iid_or_ood: "iid"
+model_params_from: "Pretrained"
+metric_type: "traditional_metrics"
+
+split_file: "${dataset}_test_${inference_on_iid_or_ood}_${data_shift}_${ood_value}"
+# split_file: "OVQA_test_iid_question-type_attribute-other" 
+split_file_train: "${dataset}_train_${train_iid_ood}_${data_shift}_${ood_value}"
+# split_file_train:  "OVQA_train_iid_question-type_attribute-other"
+data_dir: ${data_root_dir}/${dataset}
+model_path: ${oc.env:LLAVA_MED_MODEL_PATH}
+
+model_base: null
+model_output_file: ${oc.env:EXPERIMENT_ROOT_DIR}/${dataset}/${model_params_from}/eval/${split_file}/test_results.json
+metrics_file:  ${oc.env:EXPERIMENT_ROOT_DIR}/${dataset}/${model_params_from}/metrics/${split_file}/${metric_type}.json
+averaged_metrics_file: ${oc.env:EXPERIMENT_ROOT_DIR}/${dataset}/Pretrained/metrics/${split_file}/averaged_${metric_type}.json
