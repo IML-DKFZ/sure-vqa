@@ -1,0 +1,19 @@
+data_root_dir: ${oc.env:DATASET_ROOT_DIR}
+dataset: "SLAKE"
+data_shift: "modality"
+ood_value: "X-ray"
+train_iid_ood: "iid"
+inference_on_iid_or_ood: "iid"
+model_params_from: "Pretrained"
+
+split_file: "${dataset}_test_${inference_on_iid_or_ood}_${data_shift}_${ood_value}"
+# split_file: "SLAKE_test_iid_modality_X-Ray" 
+split_file_train: "${dataset}_train_${train_iid_ood}_${data_shift}_${ood_value}"
+# split_file_train:  "SLAKE_train_iid_modality_X-Ray"
+data_dir: ${data_root_dir}/${dataset}
+model_path: ${oc.env:LLAVA_MED_MODEL_PATH}
+
+model_base: null
+output_file: ${oc.env:EXPERIMENT_ROOT_DIR}/${dataset}/${model_params_from}/eval/${split_file}/test_results.json 
+max_new_tokens: 100
+num_workers: 24
