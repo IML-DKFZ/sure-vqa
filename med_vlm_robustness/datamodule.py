@@ -112,9 +112,9 @@ def get_ovqa_df(data_dir,test_folder_name, train_folder_name,
     if split == "all":
         return df
 
-    if dataset_name[mod] == "train" or dataset_name[mod] == "validate" or (dataset_name[mod] == "test" and split == "iid"):
+    if mod == "train" or mod == "validate" or (mod == "test" and split == "iid"):
         df = df.loc[df[split_category] != split_value]
-    elif dataset_name[mod] == "test" and split == "ood":
+    elif mod == "test" and split == "ood":
         df_test = df.loc[df[split_category] == split_value]
         # If the split value changes within one patient, we only filter the test set,
         # since otherwise we might have the same patient / image within training and test set
@@ -131,17 +131,23 @@ def get_ovqa_df(data_dir,test_folder_name, train_folder_name,
             df = pd.concat([df_test, df_train, df_val])
     return df
 
-
-def get_datamodule(data_dir:Path, output_file_name:str, ood_value:str,dataset_name:str,dataset:str, split:str, data_shift:str, batch_size:int, num_workers:int = 0):
-    json_file = get_json_filename(data_dir=data_dir, output_file_name=output_file_name, ood_value=ood_value,dataset_name=dataset_name,dataset=dataset, split=split, data_shift=data_shift)
+def get_datamodule(data_dir:Path, output_file_name:str, ood_value:str,
+                   test_folder_name:str,train_folder_name:str,
+                   val_folder_name:str,mod:str, dataset_name:str, 
+                   split:str, data_shift:str, batch_size:int, num_workers:int = 0):
+    
+    json_file = get_json_filename(data_dir=data_dir, output_file_name=output_file_name, 
+                                  ood_value=ood_value,test_folder_name=test_folder_name, 
+                                  train_folder_name=train_folder_name,val_folder_name=val_folder_name,
+                                  dataset_name=dataset_name, mod = mod, split=split, data_shift=data_shift)
     df = pd.read_json(json_file)
-    if dataset == "SLAKE":
+    if dataset_name == "SLAKE":
         return SlakeDatamodule(data_dir=data_dir, batch_size=batch_size, df=df, num_workers=num_workers)
-    elif dataset == "OVQA":
+    elif dataset_name == "OVQA":
         # TODO : rename this as datamodule
         return SlakeDatamodule(data_dir=data_dir, batch_size=batch_size, df=df, num_workers=num_workers)
     else:
-        raise NotImplementedError(f"Dataset {dataset} not implemented")
+        raise NotImplementedError(f"Dataset {dataset_name} not implemented")
 
 
 def convert_raw_to_final(df, save_path):
@@ -209,7 +215,10 @@ def convert_ovqa_raw_to_final(df, save_path):
         json.dump(final_data, output_file, indent=4)
 
 
-def get_json_filename(data_dir:Path, output_file_name:str, ood_value:str,test_folder_name:str,train_folder_name:str,val_folder_name:str,mod:str,dataset_name:str, split:str, data_shift:str):
+def get_json_filename(data_dir:Path, output_file_name:str, ood_value:str,
+                      test_folder_name:str, train_folder_name:str,
+                      val_folder_name:str,mod:str,dataset_name:str, 
+                      split:str, data_shift:str):
     ''' 
     # TODO: add explanation here
     dataset_name: This is the name of the file you want to load (train, test, val)
@@ -248,6 +257,7 @@ def get_json_filename(data_dir:Path, output_file_name:str, ood_value:str,test_fo
                               split=split, split_category=split_category, split_value=split_value)
             convert_raw_to_final(df, data_dir / "split_files" / f"{output_file_name}.json")
         elif dataset_name == "OVQA":
+            split_value = split_value.replace("_", " ")
             df = get_ovqa_df(data_dir=data_dir, test_folder_name=test_folder_name,
                               train_folder_name=train_folder_name,val_folder_name=val_folder_name,mod=mod, 
                               split=split, split_category=split_category, split_value=split_value)
