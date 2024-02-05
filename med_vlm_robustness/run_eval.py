@@ -67,7 +67,7 @@ def evaluate(gt, pred, answer_type):
         b_score_2 = sentence_bleu(references=[str(gt).lower().split()],
                                     hypothesis=str(pred).lower().split(), weights=(1/2, 1/2))
         b_score_3 = sentence_bleu(references=[str(gt).lower().split()],
-                                    hypothesis=str(pred).lower().split(), weights=(1/2, 1/2, 1/2))
+                                    hypothesis=str(pred).lower().split(), weights=(1/3, 1/3, 1/3))
         # Bleu from Llava-Med paper
         # llava_b_score = bleu(pred.lower(), gt.lower(), n=1, weights=[1])
         # llava_b_score_2 = bleu(pred.lower(), gt.lower(), n=2, weights=[1/2,1/2])

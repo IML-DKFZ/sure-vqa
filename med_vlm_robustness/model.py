@@ -127,7 +127,7 @@ class LLaVA_Med(pl.LightningModule):
         outputs = outputs.strip()
         if outputs.endswith(stop_str):
             outputs = outputs[: -len(stop_str)]
-        outputs = outputs.strip()
+        outputs = outputs.strip() # -> TODO: what does this do
         # print(qs)
         # print(outputs)
         self.test_results.append({
