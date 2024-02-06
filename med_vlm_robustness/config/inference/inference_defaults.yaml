@@ -1,19 +1,20 @@
 data_root_dir: ${oc.env:DATASET_ROOT_DIR}
-dataset: "OVQA"
+dataset: "SLAKE"
 test_folder_name: "test.json"
 val_folder_name: "validate.json"
 train_folder_name: "train.json"
-data_shift: "question_type"
-ood_value: "Attribute Other"
+data_shift: "modality"
+ood_value: "X-Ray"
 train_split: "iid"
 split: "iid"
 model_type: "lora"
 
 split_file: "${dataset}_test_${split}_${data_shift}_${ood_value}"
-# split_file: "OVQA_test_iid_question-type_attribute-other" 
+# split_file: "SLAKE_test_iid_modality_X-Ray"
 split_file_train: "${dataset}_train_${train_split}_${data_shift}_${ood_value}"
-# split_file_train:  "OVQA_train_iid_question-type_attribute-other"
+# split_file_train:  "SLAKE_train_iid_modality_X-Ray"
 data_dir: ${data_root_dir}/${dataset}
+# model_path: ${oc.env:EXPERIMENT_ROOT_DIR}/${dataset}/LoRA/llava-${split_file_train}
 model_path: ${oc.env:EXPERIMENT_ROOT_DIR}/${dataset}/${model_type}/llava-${split_file_train}-finetune_${model_type}
 
 
@@ -23,12 +24,3 @@ output_file: ${model_path}/eval/${split_file}/test_results.json
 max_new_tokens: 100
 num_workers: 24
 batch_size: 1
-
-# possible question types and test set counts in the dataset
-# question_type       
-# Abnormality      509
-# Attribute Other  269
-# Condition        452
-# Modality         316
-# Organ System     237
-# PLANE            119
