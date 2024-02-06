@@ -2,7 +2,6 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 import os
 import json
 import torch
-import ndjson
 from tqdm import tqdm
 from pathlib import Path
 import re

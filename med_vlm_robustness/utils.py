@@ -12,7 +12,7 @@ def get_config():
         default="med_vlm_robustness/med_vlm_robustness/config/training_defaults.yaml",
         help="Config file to use",
     )
-    parser.add_argument("--overrides", nargs='+', help="Specify key-value pairs to override")
+    parser.add_argument("--overrides", nargs='*', help="Specify key-value pairs to override")
     args = parser.parse_args()
 
     yaml_config = OmegaConf.load(args.config)
@@ -25,5 +25,8 @@ def get_config():
         for override in args.overrides:
             key, val = override.split('=')
             OmegaConf.update(config, key=key, value=val)
+
+    if "model_name" in config and not config.model_name:
+        config.model_name = ""
 
     return config
