@@ -44,6 +44,9 @@ class LLaVA_Med(pl.LightningModule):
         )
         self.test_results = []
         self.output_file = cfg.output_file
+        self.model_type = cfg.model_type
+        if self.model_type == "prompt":
+            self.prompt_embed = torch.load(f"{cfg.model_path}/adapter_model.bin")
 
 
     def test_step(self, batch, batch_idx):
@@ -64,8 +67,8 @@ class LLaVA_Med(pl.LightningModule):
             conv_mode = "llava_llama_2"
         elif "v1" in self.model_name.lower():
             conv_mode = "llava_v1"
-        elif "mpt" in self.model_name.lower():
-            conv_mode = "mpt"
+        # elif "mpt" in self.model_name.lower():
+        #     conv_mode = "mpt"
         else:
             conv_mode = "llava_v0"
         # TODO: replace conv mode by this part
@@ -97,15 +100,40 @@ class LLaVA_Med(pl.LightningModule):
         # add stopping strings to stop model when it tries to generate aditional conversations after giving the answer
         keywords = [stop_str, "###", "\n"]
         stopping_criteria = KeywordsStoppingCriteria(keywords, self.tokenizer, input_ids)
-
-        with torch.inference_mode():
-            output_ids = self.model.generate(
-                input_ids,
-                images=images,
-                use_cache=True,
-                stopping_criteria=[stopping_criteria],
-                max_new_tokens=self.max_new_token,
-            )
+        if self.model_type != "prompt":
+            with torch.inference_mode():
+                output_ids = self.model.generate(
+                    input_ids,
+                    images=images,
+                    use_cache=True,
+                    stopping_criteria=[stopping_criteria],
+                    max_new_tokens=self.max_new_token,
+                )
+        else:
+            with torch.inference_mode():
+                (
+                    _,
+                    position_ids,
+                    attention_mask,
+                    past_key_values,
+                    inputs_embeds,
+                    labels
+                ) = self.model.prepare_inputs_labels_for_multimodal(
+                    input_ids,
+                    None,
+                    None,
+                    None,
+                    None,
+                    images
+                )
+                inputs_embeds = torch.cat((self.prompt_embed["prompt_embeddings"].unsqueeze(0).to(inputs_embeds.device), inputs_embeds), dim=1).type(torch.bfloat16)
+                output_ids = self.model.generate(
+                    input_ids=input_ids,
+                    inputs_embeds=inputs_embeds,
+                    use_cache=True,
+                    stopping_criteria=[stopping_criteria],
+                    max_new_tokens=self.max_new_token,
+                )
         # TODO: change it to this later
         # with torch.inference_mode():
         #     output_ids = self.model.generate(
