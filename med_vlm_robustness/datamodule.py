@@ -72,17 +72,14 @@ def get_slake_df(data_dir,test_folder_name, train_folder_name,
         # since otherwise we might have the same patient / image within training and test set
         if split_category in ["answer_type", "content_type"]:
             df = df_test
-        # If the split values stays constant within one patient, we can also take the training and validation set
+        # If the split values stays constant within one patient, we can also take the training set
         # into the ood test set since this does not imply having the same patient in training / test set
         # TODO: should we really do it like this?
         else:
             df_train = pd.read_json(data_dir / train_folder_name)
             df_train = df_train.loc[df_train['q_lang'] == "en"]
             df_train = df_train.loc[df_train[split_category] == split_value]
-            df_val = pd.read_json(data_dir / val_folder_name)
-            df_val = df_val.loc[df_val['q_lang'] == "en"]
-            df_val = df_val.loc[df_val[split_category] == split_value]
-            df = pd.concat([df_test, df_train, df_val])
+            df = pd.concat([df_test, df_train])
     return df
 
 
@@ -121,15 +118,13 @@ def get_ovqa_df(data_dir,test_folder_name, train_folder_name,
         # since otherwise we might have the same patient / image within training and test set
         if split_category in ["question_type"]: # there are no duplicates in "image_organ"
             df = df_test
-        # If the split values stays constant within one patient, we can also take the training and validation set
+        # If the split values stays constant within one patient, we can also take the training set
         # into the ood test set since this does not imply having the same patient in training / test set
         # TODO: should we really do it like this?
         else:
             df_train = pd.read_json(data_dir / train_folder_name)
             df_train = df_train.loc[df_train[split_category] == split_value]
-            df_val = pd.read_json(data_dir / val_folder_name)
-            df_val = df_val.loc[df_val[split_category] == split_value]
-            df = pd.concat([df_test, df_train, df_val])
+            df = pd.concat([df_test, df_train])
     return df
 
 def get_datamodule(data_dir:Path, output_file_name:str, ood_value:str,
