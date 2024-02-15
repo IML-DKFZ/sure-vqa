@@ -6,6 +6,7 @@ train_folder_name: "train.json"
 data_shift: "modality"
 ood_value: "X-Ray"
 train_split: "iid"
+# lora, prompt,...
 model_type: "lora"
 split_file: "${dataset}_train_${train_split}_${data_shift}_${ood_value}"
 # split_file: "SLAKE_train_iid_modality_X-Ray"
@@ -13,6 +14,9 @@ data_dir: ${data_root_dir}/${dataset}
 output_dir: ${oc.env:EXPERIMENT_ROOT_DIR}/${dataset}/${model_type}/llava-${split_file}-finetune_${model_type}
 
 training_args:
+  seed: 123
+  prompt_enable: false
+  prompt_num_tokens: 80
   lora_enable: true
   lora_r: 128
   lora_alpha: 256

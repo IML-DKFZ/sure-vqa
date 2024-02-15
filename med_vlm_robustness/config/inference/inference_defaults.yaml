@@ -7,6 +7,7 @@ data_shift: "modality"
 ood_value: "X-Ray"
 train_split: "iid"
 split: "iid"
+# lora, prompt,...
 model_type: "lora"
 
 split_file: "${dataset}_test_${split}_${data_shift}_${ood_value}"
