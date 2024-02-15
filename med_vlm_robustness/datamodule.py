@@ -46,7 +46,8 @@ class SlakeDatamodule(pl.LightningDataModule):
             num_workers=self.num_workers,
             shuffle=False,
         )
-    
+
+
 def get_slake_df(data_dir,test_folder_name, train_folder_name, 
                  val_folder_name, mod, split, split_category=None, split_value=None):
     # split_value = split_value.capitalize() if split_category == "content_type" else split_value

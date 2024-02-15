@@ -71,16 +71,6 @@ class LLaVA_Med(pl.LightningModule):
         #     conv_mode = "mpt"
         else:
             conv_mode = "llava_v0"
-        # TODO: replace conv mode by this part
-        # # if a new conv.mode is defined in addition to the predefined options follow this
-        # if args.conv_mode is not None and conv_mode != args.conv_mode:
-        #     print(
-        #         "[WARNING] the auto inferred conversation mode is {}, while `--conv-mode` is {}, using {}".format(
-        #             conv_mode, args.conv_mode, args.conv_mode
-        #         )
-        #     )
-        # else:
-        #     args.conv_mode = conv_mode
 
         # get the conversation description(?) from the conversation templates and append it to the qs
         conv = conv_templates[conv_mode].copy()
@@ -134,19 +124,6 @@ class LLaVA_Med(pl.LightningModule):
                     stopping_criteria=[stopping_criteria],
                     max_new_tokens=self.max_new_token,
                 )
-        # TODO: change it to this later
-        # with torch.inference_mode():
-        #     output_ids = self.model.generate(
-        #         input_ids,
-        #         images=images,
-        #         do_sample=True if args.temperature > 0 else False,
-        #         temperature=args.temperature,
-        #         top_p=args.top_p,
-        #         num_beams=args.num_beams,
-        #         max_new_tokens=args.max_new_tokens,
-        #         use_cache=True,
-        #         stopping_criteria=[stopping_criteria],
-        #     )
 
         input_token_len = input_ids.shape[1]
         outputs = self.tokenizer.batch_decode(
@@ -155,9 +132,8 @@ class LLaVA_Med(pl.LightningModule):
         outputs = outputs.strip()
         if outputs.endswith(stop_str):
             outputs = outputs[: -len(stop_str)]
-        outputs = outputs.strip() # -> TODO: what does this do
-        # print(qs)
-        # print(outputs)
+        outputs = outputs.strip()
+
         self.test_results.append({
             "qid": batch["qid"][0].item(),
             "question": batch["question"][0],
