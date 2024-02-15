@@ -11,6 +11,7 @@ model_type: "lora"
 split_file: "${dataset}_train_${train_split}_${data_shift}_${ood_value}"
 # split_file: "SLAKE_train_iid_modality_X-Ray"
 data_dir: ${data_root_dir}/${dataset}
+hyperparams_model_name: seed${training_args.seed}
 output_dir: ${oc.env:EXPERIMENT_ROOT_DIR}/${dataset}/${model_type}/llava-${split_file}-finetune_${model_type}
 
 training_args:

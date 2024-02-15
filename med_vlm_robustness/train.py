@@ -5,6 +5,8 @@ from utils import get_config
 
 
 def main(cfg):
+    if cfg.hyperparams_model_name is not None:
+        cfg.output_dir = f"{cfg.output_dir}_{cfg.hyperparams_model_name}"
     model_args = ModelArguments(**cfg.model_args)
     data_args = DataArguments(**cfg.data_args)
     training_args = TrainingArguments(output_dir=cfg.output_dir)

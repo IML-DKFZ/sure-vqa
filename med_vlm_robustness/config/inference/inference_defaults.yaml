@@ -16,6 +16,7 @@ split_file_train: "${dataset}_train_${train_split}_${data_shift}_${ood_value}"
 # split_file_train:  "SLAKE_train_iid_modality_X-Ray"
 data_dir: ${data_root_dir}/${dataset}
 # model_path: ${oc.env:EXPERIMENT_ROOT_DIR}/${dataset}/LoRA/llava-${split_file_train}
+hyperparams_model_name: null
 model_path: ${oc.env:EXPERIMENT_ROOT_DIR}/${dataset}/${model_type}/llava-${split_file_train}-finetune_${model_type}
 
 
