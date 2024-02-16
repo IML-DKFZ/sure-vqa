@@ -7,11 +7,12 @@ data_shift: "modality"
 ood_value: "X-ray"
 train_split: "iid"
 split: "iid"
+mod: "test"
 model_type: "pretrained"
 
-split_file: "${dataset}_test_${split}_${data_shift}_${ood_value}"
+# split_file: "${dataset}_test_${split}_${data_shift}_${ood_value}"
 # split_file: "SLAKE_test_iid_modality_X-Ray"
-split_file_train: "${dataset}_train_${train_split}_${data_shift}_${ood_value}"
+# split_file_train: "${dataset}_train_${train_split}_${data_shift}_${ood_value}"
 # split_file_train:  "SLAKE_train_iid_modality_X-Ray"
 data_dir: ${data_root_dir}/${dataset}
 # model_path: path_to_pretrained_model
@@ -19,7 +20,7 @@ model_path: ${oc.env:LLAVA_MED_MODEL_PATH}
 
 # set the base model with the llava_med pretrained weights
 model_base: null
-output_file: ${oc.env:EXPERIMENT_ROOT_DIR}/${dataset}/${model_type}/eval/${split_file}/test_results.json
+#output_file: ${oc.env:EXPERIMENT_ROOT_DIR}/${dataset}/${model_type}/eval/${split_file}/test_results.json
 max_new_tokens: 100
 num_workers: 24
 batch_size: 1

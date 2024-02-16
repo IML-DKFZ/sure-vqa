@@ -8,11 +8,11 @@ ood_value: "X-Ray"
 train_split: "iid"
 # lora, prompt,...
 model_type: "lora"
-split_file: "${dataset}_train_${train_split}_${data_shift}_${ood_value}"
+# split_file: "${dataset}_train_${train_split}_${data_shift}_${ood_value}"
 # split_file: "SLAKE_train_iid_modality_X-Ray"
 data_dir: ${data_root_dir}/${dataset}
 hyperparams_model_name: seed${training_args.seed}
-output_dir: ${oc.env:EXPERIMENT_ROOT_DIR}/${dataset}/${model_type}/llava-${split_file}-finetune_${model_type}
+# output_dir: ${oc.env:EXPERIMENT_ROOT_DIR}/${dataset}/${model_type}/llava-${split_file}-finetune_${model_type}
 
 training_args:
   seed: 123
@@ -21,6 +21,7 @@ training_args:
   lora_enable: true
   lora_r: 128
   lora_alpha: 256
+  lora_dropout: 0.05
   # mm_projector_lr: 2e-5
   image_aspect_ratio: "pad"
   group_by_modality_length: true

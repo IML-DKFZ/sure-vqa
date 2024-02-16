@@ -7,17 +7,18 @@ data_shift: "modality"
 ood_value: "X-Ray"
 train_split: "iid"
 split: "iid"
+mod: "test"
 # lora, prompt,...
 model_type: "lora"
 
-split_file: "${dataset}_test_${split}_${data_shift}_${ood_value}"
+# split_file: "${dataset}_test_${split}_${data_shift}_${ood_value}"
 # split_file: "SLAKE_test_iid_modality_X-Ray"
-split_file_train: "${dataset}_train_${train_split}_${data_shift}_${ood_value}"
+# split_file_train: "${dataset}_train_${train_split}_${data_shift}_${ood_value}"
 # split_file_train:  "SLAKE_train_iid_modality_X-Ray"
 data_dir: ${data_root_dir}/${dataset}
 # model_path: ${oc.env:EXPERIMENT_ROOT_DIR}/${dataset}/LoRA/llava-${split_file_train}
 hyperparams_model_name: null
-model_path: ${oc.env:EXPERIMENT_ROOT_DIR}/${dataset}/${model_type}/llava-${split_file_train}-finetune_${model_type}
+# model_path: ${oc.env:EXPERIMENT_ROOT_DIR}/${dataset}/${model_type}/llava-${split_file_train}-finetune_${model_type}
 
 
 # set the base model with the llava_med pretrained weights

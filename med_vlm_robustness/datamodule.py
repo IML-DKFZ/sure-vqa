@@ -127,21 +127,22 @@ def get_ovqa_df(data_dir,test_folder_name, train_folder_name,
             df = pd.concat([df_test, df_train])
     return df
 
-def get_datamodule(data_dir:Path, output_file_name:str, ood_value:str,
+def get_datamodule(data_dir:Path, ood_value:str,
                    test_folder_name:str,train_folder_name:str,
                    val_folder_name:str,mod:str, dataset_name:str, 
                    split:str, data_shift:str, batch_size:int, num_workers:int = 0):
     
-    json_file = get_json_filename(data_dir=data_dir, output_file_name=output_file_name, 
+    json_file_path, json_file_name = get_json_filename(data_dir=data_dir,
                                   ood_value=ood_value,test_folder_name=test_folder_name, 
                                   train_folder_name=train_folder_name,val_folder_name=val_folder_name,
                                   dataset_name=dataset_name, mod = mod, split=split, data_shift=data_shift)
-    df = pd.read_json(json_file)
+    print(json_file_path)
+    df = pd.read_json(json_file_path)
     if dataset_name == "SLAKE":
-        return SlakeDatamodule(data_dir=data_dir, batch_size=batch_size, df=df, num_workers=num_workers)
+        return SlakeDatamodule(data_dir=data_dir, batch_size=batch_size, df=df, num_workers=num_workers), json_file_name
     elif dataset_name == "OVQA":
         # TODO : rename this as datamodule
-        return SlakeDatamodule(data_dir=data_dir, batch_size=batch_size, df=df, num_workers=num_workers)
+        return SlakeDatamodule(data_dir=data_dir, batch_size=batch_size, df=df, num_workers=num_workers), json_file_name
     else:
         raise NotImplementedError(f"Dataset {dataset_name} not implemented")
 
@@ -211,7 +212,7 @@ def convert_ovqa_raw_to_final(df, save_path):
         json.dump(final_data, output_file, indent=4)
 
 
-def get_json_filename(data_dir:Path, output_file_name:str, ood_value:str,
+def get_json_filename(data_dir:Path, ood_value:str,
                       test_folder_name:str, train_folder_name:str,
                       val_folder_name:str,mod:str,dataset_name:str, 
                       split:str, data_shift:str):
@@ -237,15 +238,17 @@ def get_json_filename(data_dir:Path, output_file_name:str, ood_value:str,
     if split == "all":
         split_category = None
         split_value = None
+        output_file_name = f"{dataset_name}_{mod}_{split}".replace(" ", "")
     else:
         split_category = data_shift
         split_value = ood_value
+        output_file_name = f"{dataset_name}_{mod}_{split}_{split_category}_{split_value}".replace(" ", "")
 
     if not os.path.isdir(data_dir / "split_files"):
         os.makedirs(data_dir / "split_files")
 
     if os.path.isfile(data_dir / "split_files" / f"{output_file_name}.json"):
-        return data_dir / "split_files" / f"{output_file_name}.json"
+        return data_dir / "split_files" / f"{output_file_name}.json", output_file_name
     else:
         if dataset_name == "SLAKE":
             df = get_slake_df(data_dir=data_dir, test_folder_name=test_folder_name,
@@ -253,7 +256,8 @@ def get_json_filename(data_dir:Path, output_file_name:str, ood_value:str,
                               split=split, split_category=split_category, split_value=split_value)
             convert_raw_to_final(df, data_dir / "split_files" / f"{output_file_name}.json")
         elif dataset_name == "OVQA":
-            split_value = split_value.replace("_", " ")
+            if split_value is not None:
+                split_value = split_value.replace("_", " ")
             df = get_ovqa_df(data_dir=data_dir, test_folder_name=test_folder_name,
                               train_folder_name=train_folder_name,val_folder_name=val_folder_name,mod=mod, 
                               split=split, split_category=split_category, split_value=split_value)
@@ -261,7 +265,7 @@ def get_json_filename(data_dir:Path, output_file_name:str, ood_value:str,
         else:
             raise NotImplementedError(f"Dataset {dataset_name} not implemented")
 
-        return data_dir / "split_files" / f"{output_file_name}.json"
+        return data_dir / "split_files" / f"{output_file_name}.json", output_file_name
     
 # def get_json_filename(data_dir:Path, name:str):
 #     identifier = name.split("_")

@@ -32,7 +32,7 @@ class LLaVA_Med(pl.LightningModule):
     def __init__(self, cfg):
         super().__init__()
         disable_torch_init()
-        if cfg.hyperparams_model_name is not None:
+        if "hyperparams_model_name" in cfg and cfg.hyperparams_model_name is not None:
             cfg.model_path = f"{cfg.model_path}_{cfg.hyperparams_model_name}"
         self.model_path = cfg.model_path
         self.model_base = cfg.model_base
