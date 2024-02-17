@@ -2,10 +2,10 @@ import os
 from pathlib import Path
 from llava.train.train import *
 from datamodule import get_json_filename
-from utils import get_config
-
+from utils import get_config, set_seed
 
 def main(cfg):
+    set_seed(cfg.training_args.seed)
     model_args = ModelArguments(**cfg.model_args)
     data_args = DataArguments(**cfg.data_args)
 

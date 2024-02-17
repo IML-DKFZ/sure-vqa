@@ -7,10 +7,12 @@ import torch.cuda
 from datamodule import get_datamodule
 from model import LLaVA_Med
 from pytorch_lightning import Trainer
-from utils import get_config
+from utils import get_config, set_seed
 
 
 def main(cfg):
+    if "seed" in cfg:
+        set_seed(cfg.seed)
     dm, split_file_name = get_datamodule(data_dir=Path(cfg.data_dir),
                        ood_value=cfg.ood_value, test_folder_name=cfg.test_folder_name,
                        train_folder_name=cfg.train_folder_name, val_folder_name=cfg.val_folder_name, 
@@ -20,9 +22,15 @@ def main(cfg):
     dm.setup()
 
     split_file_train = split_file_name.replace(cfg.mod, 'train').replace('ood', 'iid')
-    if "model_path" not in cfg:
-        cfg["model_path"] = f"{os.getenv('EXPERIMENT_ROOT_DIR')}/{cfg.dataset}/{cfg.model_type}/llava-{split_file_train}-finetune_{cfg.model_type}"
+    print(f"Split file train: {split_file_train}")
+    if "model_name" not in cfg:
+        cfg["model_name"] = f"llava-{split_file_train}-finetune_{cfg.model_type}"
+    if "hyperparams_model_name" in cfg and cfg.hyperparams_model_name is not None:
+        cfg.model_name = f"{cfg.model_name}_{cfg.hyperparams_model_name}"
 
+    if "model_path" not in cfg:
+        cfg["model_path"] = f"{os.getenv('EXPERIMENT_ROOT_DIR')}/{cfg.dataset}/{cfg.model_type}/{cfg.model_name}"
+    print(f"Model path: {cfg.model_path}")
     if "output_file" not in cfg:
         if cfg.model_type != "pretrained":
             cfg["output_file"] = f"{cfg.model_path}/eval/{split_file_name}/test_results.json"

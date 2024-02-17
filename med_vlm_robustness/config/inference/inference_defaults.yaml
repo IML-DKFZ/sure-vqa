@@ -10,6 +10,7 @@ split: "iid"
 mod: "test"
 # lora, prompt,...
 model_type: "lora"
+seed: 123
 
 # split_file: "${dataset}_test_${split}_${data_shift}_${ood_value}"
 # split_file: "SLAKE_test_iid_modality_X-Ray"
@@ -23,7 +24,7 @@ hyperparams_model_name: null
 
 # set the base model with the llava_med pretrained weights
 model_base: ${oc.env:LLAVA_MED_MODEL_PATH}
-output_file: ${model_path}/eval/${split_file}/test_results.json
+#output_file: ${model_path}/eval/${split_file}/test_results.json
 max_new_tokens: 100
 num_workers: 24
 batch_size: 1

@@ -9,6 +9,7 @@ train_split: "iid"
 split: "iid"
 mod: "test"
 model_type: "pretrained"
+seed: 123
 
 # split_file: "${dataset}_test_${split}_${data_shift}_${ood_value}"
 # split_file: "SLAKE_test_iid_modality_X-Ray"
