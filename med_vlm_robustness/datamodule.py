@@ -83,7 +83,7 @@ def get_slake_df(data_dir,test_folder_name, train_folder_name,
     return df
 
 
-def get_ovqa_df(data_dir,test_folder_name, train_folder_name, 
+def get_ovqa_df(data_dir,test_folder_name, train_folder_name,
                  val_folder_name, mod, split, split_category=None, split_value=None):
     
     # mod -> train, val, test
@@ -127,6 +127,29 @@ def get_ovqa_df(data_dir,test_folder_name, train_folder_name,
             df = pd.concat([df_test, df_train])
     return df
 
+
+def get_lidc_df(data_dir,test_folder_name, train_folder_name,
+                 val_folder_name, mod, split, split_category=None, split_value=None):
+    # split_value = split_value.capitalize() if split_category == "content_type" else split_value
+    # mod -> train, val, test
+    dataset_name = {
+        "train" : train_folder_name,
+        "val" : val_folder_name,
+        "test" : test_folder_name,
+    }
+
+    df = pd.read_json(data_dir / f"{dataset_name[mod]}", dtype=str)
+
+    if split == "all":
+        return df
+
+    if mod == "train" or mod == "val" or (mod == "test" and split == "iid"):
+        df = df.loc[df[split_category] != split_value]
+    elif mod == "test" and split == "ood":
+        # Here we do not want to add anything from training to not mess up patients in training and test set
+        df = df.loc[df[split_category] == split_value]
+    return df
+
 def get_datamodule(data_dir:Path, ood_value:str,
                    test_folder_name:str,train_folder_name:str,
                    val_folder_name:str,mod:str, dataset_name:str, 
@@ -141,6 +164,9 @@ def get_datamodule(data_dir:Path, ood_value:str,
     if dataset_name == "SLAKE":
         return SlakeDatamodule(data_dir=data_dir, batch_size=batch_size, df=df, num_workers=num_workers), json_file_name
     elif dataset_name == "OVQA":
+        # TODO : rename this as datamodule
+        return SlakeDatamodule(data_dir=data_dir, batch_size=batch_size, df=df, num_workers=num_workers), json_file_name
+    elif dataset_name == "LIDC":
         # TODO : rename this as datamodule
         return SlakeDatamodule(data_dir=data_dir, batch_size=batch_size, df=df, num_workers=num_workers), json_file_name
     else:
@@ -212,6 +238,40 @@ def convert_ovqa_raw_to_final(df, save_path):
         json.dump(final_data, output_file, indent=4)
 
 
+def convert_lidc_raw_to_final(df, save_path):
+    final_data = []
+
+    # Process each entry as a separate conversation
+    for _, row in df.iterrows():
+        qid = row["qid"]
+        new_entry = {
+            "id": str(qid),
+            "image": f"images/" + f"{row['image_file_name']}.png",
+            "conversations": [
+                {
+                    "from": "human",
+                    "value": row["question"]
+                },
+                {
+                    "from": "gpt",
+                    "value": row["answer"]
+                }
+            ],
+            "img_id": row["image_file_name"],
+            "dicom_series_uid": row["dicom_series_uid"],
+            "patient_id": row["patient_id"],
+            "scan_id": row["scan_id"],
+            "nodule_index": row["nodule_index"],
+            "manufacturer": row["manufacturer"],
+            "answer_type": row["answer_type"],
+            "content_type": row["content_type"],
+        }
+        final_data.append(new_entry)
+
+    with open(str(save_path), 'w') as output_file:
+        json.dump(final_data, output_file, indent=4)
+
+
 def get_json_filename(data_dir:Path, ood_value:str,
                       test_folder_name:str, train_folder_name:str,
                       val_folder_name:str,mod:str,dataset_name:str, 
@@ -262,6 +322,11 @@ def get_json_filename(data_dir:Path, ood_value:str,
                               train_folder_name=train_folder_name,val_folder_name=val_folder_name,mod=mod, 
                               split=split, split_category=split_category, split_value=split_value)
             convert_ovqa_raw_to_final(df, data_dir / "split_files" / f"{output_file_name}.json")
+        elif dataset_name == "LIDC":
+            df = get_lidc_df(data_dir=data_dir, test_folder_name=test_folder_name,
+                              train_folder_name=train_folder_name, val_folder_name=val_folder_name, mod=mod,
+                              split=split, split_category=split_category, split_value=split_value)
+            convert_lidc_raw_to_final(df, data_dir / "split_files" / f"{output_file_name}.json")
         else:
             raise NotImplementedError(f"Dataset {dataset_name} not implemented")
 
