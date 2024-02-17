@@ -11,8 +11,6 @@ from utils import get_config
 
 
 def main(cfg):
-    llava = LLaVA_Med(cfg)
-
     dm, split_file_name = get_datamodule(data_dir=Path(cfg.data_dir),
                        ood_value=cfg.ood_value, test_folder_name=cfg.test_folder_name,
                        train_folder_name=cfg.train_folder_name, val_folder_name=cfg.val_folder_name, 
