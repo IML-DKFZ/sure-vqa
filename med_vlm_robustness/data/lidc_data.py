@@ -83,14 +83,17 @@ def save_nodules(args: Namespace):
                     vol, mask, irp_pts = nod[ann_idx].uniform_cubic_resample(
                         image_size - 1, return_irp_pts=True
                     )
-                    image_name = f"{str(nod[0].scan.id).zfill(4)}_{str(nod_idx).zfill(2)}.nii.gz"
+                    image_name = f"{str(nod[0].scan.id).zfill(4)}_{str(nod_idx).zfill(2)}.png"
                     image_save_path = (
                         images_save_dir
                         / image_name
                     )
                     vol = vol[32, :, :]
                     assert vol.shape == (64, 64)
-                    save(vol, str(image_save_path))
+                    vol_normalized = (vol - np.min(vol)) * (
+                            255.0 / (np.max(vol) - np.min(vol)))
+                    vol_normalized = vol_normalized.astype('uint8')
+                    save(vol_normalized, str(image_save_path))
                     metadata_nod["Study Instance UID"] = str(nod[0].scan.study_instance_uid)
                     metadata_nod["Series Instance UID"] = str(nod[0].scan.series_instance_uid)
                     metadata_nod["Patient ID"] = str(nod[0].scan.patient_id)
