@@ -1,7 +1,8 @@
 import math
 from eval.utils import *
 from eval.glossary import *
-
+import json
+from nltk.translate.bleu_score import sentence_bleu
 
 def bleu(candidate, references, n, weights):
     pn = []
@@ -59,7 +60,6 @@ def calculate_exactmatch(candidate, reference):
 
 
 # Exact match with normalization
-
 def similarity_candidate_prediction(candidate_answer, prediction):
     candidate_answer = split_sentence(candidate_answer, 1)
 
@@ -145,3 +145,63 @@ def calculate_f1score(candidate, reference):
             return 0, 0, 0
         else:
             return 2 * precision * recall / (precision + recall), precision, recall
+        
+def get_accuracy(eval_data, data_categories):
+
+    sum_correct = 0 
+    sum_num_categories = 0
+    num_qs = 0
+    results = [{
+            'avg_accuracy': 0,
+            'avg_num_categories' : 0,
+        },]
+    for i,line in eval_data.iterrows():
+        qid = line['qid']
+        gt = line['gt'].lower()
+        pred = line['pred'].lower()
+        answer_type = line['answer_type']
+        # get the numberof categories and list of categories from the data_category dataframe
+        num_categories = data_categories[data_categories['qid'] == qid]['num_categories'].iloc[0]
+        
+        if answer_type == 'CLOSED': # calculate the metrics if the sample is closed ended
+            sum_num_categories += num_categories
+            num_qs +=  1 
+            if (gt in pred) or (pred in gt):
+                sum_correct += 1
+                line['accuracy'] = 1
+            else:
+                line['accuracy'] = 0
+            results.append(line.to_dict())
+    
+    results[0]['avg_accuracy'] = sum_correct / num_qs
+    results[0]['avg_num_categories'] = sum_num_categories / num_qs
+                
+    return results
+
+def get_open_ended_metrics(gt, pred):
+    gt = gt.lower()
+    pred = pred.lower()
+
+    gt = normalize_word(gt)
+    pred = normalize_word(pred)
+
+    exact_score = calculate_exactmatch(pred, gt)
+    f1_score, precision, recall = calculate_f1score(pred, gt)
+    b_score = sentence_bleu(references=[str(gt).lower().split()],
+                            hypothesis=str(pred).lower().split(), weights=[1])
+    b_score_1 = sentence_bleu(references=[str(gt).lower().split()],
+                                hypothesis=str(pred).lower().split(), weights=[1])
+    b_score_2 = sentence_bleu(references=[str(gt).lower().split()],
+                                hypothesis=str(pred).lower().split(), weights=(1/2, 1/2))
+    b_score_3 = sentence_bleu(references=[str(gt).lower().split()],
+                                hypothesis=str(pred).lower().split(), weights=(1/3, 1/3, 1/3))
+    return {
+        'exact_match_score': exact_score,
+        'f1_score': f1_score,
+        'precision': precision,
+        'recall': recall,
+        'bleu_score': b_score,
+        'bleu_score_1': b_score_1,
+        'bleu_score_2': b_score_2,
+        'bleu_score_3': b_score_3,
+    }

@@ -16,5 +16,9 @@ model_name: llava-${split_file_train}-finetune_${model_type}
 exp_path: ${oc.env:EXPERIMENT_ROOT_DIR}/${dataset}/${model_type}/${model_name}
 
 model_output_file: ${exp_path}/eval/${split_file}/test_results.json
-metrics_file: ${exp_path}/eval/${split_file}/${metric_type}.json
+open_ended_metrics_file: ${exp_path}/eval/${split_file}/open_ended_${metric_type}.json
+close_ended_metrics_file: ${exp_path}/eval/${split_file}/close_ended_${metric_type}.json
+model_train_file: ${data_root_dir}/${dataset}/train.json
+model_val_file: ${data_root_dir}/${dataset}/val.json
+model_test_file: ${data_root_dir}/${dataset}/test.json
 averaged_metrics_file: ${exp_path}/eval/${split_file}/${metric_type}_averaged.json

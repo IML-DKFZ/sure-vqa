@@ -5,7 +5,7 @@ import random
 import pandas as pd
 from nltk.translate.bleu_score import sentence_bleu
 from eval.eval_metrics import calculate_exactmatch, calculate_f1score, bleu, \
-    calculate_appearance_with_normalization
+    calculate_appearance_with_normalization, get_accuracy, get_open_ended_metrics
 from eval.glossary import *
 
 from pathlib import Path
@@ -15,13 +15,11 @@ import warnings
 
 warnings.simplefilter('ignore')
 
-
 def parse_option():
     parser = argparse.ArgumentParser('Evaluation for LLaVA Generated Outputs', add_help=False)
     parser.add_argument('--pred', type=str, help='path to prediction file', )
     args, unparsed = parser.parse_known_args()
     return args
-
 
 def evaluate(gt, pred, answer_type):
     gt = gt.lower()
@@ -32,18 +30,10 @@ def evaluate(gt, pred, answer_type):
 
     if answer_type == "CLOSED":
         # for close-ended question (Yes/No)
-        if gt in pred:
+        if (gt in pred) or (pred in gt):
             yes_no_acc = 1
         else:
             yes_no_acc = 0
-        # TODO: discuss if this males sense
-        # if 'yes' in pred or 'no' in pred:
-        #     if gt in pred:
-        #         yes_no_acc = 1
-        #     else:
-        #         yes_no_acc = 0
-        # else:
-        #     # yes_no_acc = 0
         return {
             "yes/no accuracy": yes_no_acc
         }
@@ -51,15 +41,6 @@ def evaluate(gt, pred, answer_type):
     else:
         exact_score = calculate_exactmatch(pred, gt)
         f1_score, precision, recall = calculate_f1score(pred, gt)
-        # b_score = sentence_bleu(references=[str(gt).lower().split()],
-        #                         hypothesis=str(pred).lower().split())
-        # b_score_1 = sentence_bleu(references=[str(gt).lower().split()],
-        #                           hypothesis=str(pred).lower().split(), weights=(1, 0, 0, 0))
-        # b_score_2 = sentence_bleu(references=[str(gt).lower().split()],
-        #                           hypothesis=str(pred).lower().split(), weights=(0, 1, 0, 0))
-        # b_score_3 = sentence_bleu(references=[str(gt).lower().split()],
-        #                           hypothesis=str(pred).lower().split(), weights=(0, 0, 1, 0))
-        # TODO: isnt this the right calculation
         b_score = sentence_bleu(references=[str(gt).lower().split()],
                                 hypothesis=str(pred).lower().split(), weights=[1])
         b_score_1 = sentence_bleu(references=[str(gt).lower().split()],
@@ -68,10 +49,6 @@ def evaluate(gt, pred, answer_type):
                                     hypothesis=str(pred).lower().split(), weights=(1/2, 1/2))
         b_score_3 = sentence_bleu(references=[str(gt).lower().split()],
                                     hypothesis=str(pred).lower().split(), weights=(1/3, 1/3, 1/3))
-        # Bleu from Llava-Med paper
-        # llava_b_score = bleu(pred.lower(), gt.lower(), n=1, weights=[1])
-        # llava_b_score_2 = bleu(pred.lower(), gt.lower(), n=2, weights=[1/2,1/2])
-        # llava_b_score_3 = bleu(pred.lower(), gt.lower(), n=3, weights=[1/3,1/3,1/3])
         return {
             'exact match score': exact_score,
             'f1 score': f1_score,
@@ -81,12 +58,9 @@ def evaluate(gt, pred, answer_type):
             'bleu_score_1': b_score_1,
             'bleu_score_2': b_score_2,
             'bleu_score_3': b_score_3,
-            # "llava_bleu_score": float(llava_b_score),
-            # "llava_bleu_score_2": float(llava_b_score_2),
-            # "llava_bleu_score_3": float(llava_b_score_3),
         }
 
-def main(cfg):
+def main_old(cfg):
     # set the params to calculate the average
     num_closed_qs=0
     num_open_qs=0
@@ -99,9 +73,6 @@ def main(cfg):
     sum_bleu_1=0
     sum_bleu_2=0
     sum_bleu_3=0
-    # sum_llava_bleu=0
-    # sum_llava_bleu_2=0
-    # sum_llava_bleu_3=0
 
     pred_df = pd.read_json(cfg.model_output_file)
     results = []
@@ -110,7 +81,6 @@ def main(cfg):
     for _, row in pred_df.iterrows():
         pred = row['pred']
         gt = row['gt']
-        pred = row['pred'] #  TODO: why is this twice???
         answer_type = row['answer_type']
         metrics_dict = evaluate(gt=gt, pred=pred, answer_type=answer_type)
 
@@ -128,9 +98,6 @@ def main(cfg):
             sum_bleu_1 += metrics_dict['bleu_score_1']
             sum_bleu_2 += metrics_dict['bleu_score_2']
             sum_bleu_3 += metrics_dict['bleu_score_3']
-            # sum_llava_bleu += metrics_dict["llava_bleu_score"]
-            # sum_llava_bleu_2 += metrics_dict["llava_bleu_score_2"]
-            # sum_llava_bleu_3 += metrics_dict["llava_bleu_score_3"]
 
 
         results.append({
@@ -149,9 +116,6 @@ def main(cfg):
         'avg_bleu_score_1': sum_bleu_1 / max(num_open_qs, 1),
         'avg_bleu_score_2': sum_bleu_2 / max(num_open_qs, 1),
         'avg_bleu_score_3':  sum_bleu_3   / max(num_open_qs, 1),
-        # "avg_llava_bleu_score":   sum_llava_bleu / max(num_open_qs, 1),
-        # "avg_llava_bleu_score_2": sum_llava_bleu_2/ max(num_open_qs, 1),
-        # "avg_llava_bleu_score_3": sum_llava_bleu_3/ max(num_open_qs, 1),
         }
     
     if not Path(cfg.metrics_file).parent.is_dir():
@@ -163,6 +127,92 @@ def main(cfg):
         os.makedirs(Path(cfg.averaged_metrics_file).parent)
     with open(cfg.averaged_metrics_file, 'w') as f:
         json.dump(average_scores, f, indent=4, sort_keys=True)
+
+def evaluate_open_ended(df):
+    # set the params to calculate the average
+    num_open_qs=0
+    sum_exact_match_score=0
+    sum_f1_score=0
+    sum_prec=0
+    sum_recall=0
+    sum_bleu=0
+    sum_bleu_1=0
+    sum_bleu_2=0
+    sum_bleu_3=0
+
+    results = [{
+        'avg_exact_match_score': 0,
+        'avg_f1_score': 0,
+        'avg_precision': 0,
+        'avg_recall': 0,
+        'avg_bleu_score': 0,
+        'avg_bleu_score_1': 0,
+        'avg_bleu_score_2': 0,
+        'avg_bleu_score_3': 0,
+    }]
+    for _, row in df.iterrows():
+        pred = row['pred'].lower()
+        gt = row['gt'].lower()
+        answer_type = row['answer_type']
+        
+        if answer_type == 'OPEN':
+            metrics = get_open_ended_metrics(gt, pred)
+            num_open_qs += 1
+            sum_exact_match_score += metrics['exact_match_score']
+            sum_f1_score += metrics['f1_score']
+            sum_prec += metrics['precision']
+            sum_recall += metrics['recall']
+            sum_bleu += metrics['bleu_score']
+            sum_bleu_1 += metrics['bleu_score_1']
+            sum_bleu_2 += metrics['bleu_score_2']
+            sum_bleu_3 += metrics['bleu_score_3']
+            row['exact_match_score'] = metrics['exact_match_score']
+            row['f1_score'] = metrics['f1_score']
+            row['precision'] = metrics['precision']
+            row['recall'] = metrics['recall']
+            row['bleu_score'] = metrics['bleu_score']
+            row['bleu_score_1'] = metrics['bleu_score_1']
+            row['bleu_score_2'] = metrics['bleu_score_2']
+            row['bleu_score_3'] = metrics['bleu_score_3']
+            
+        results.append(row.to_dict())
+    
+    results[0]['avg_exact_match_score'] = sum_exact_match_score / max(num_open_qs, 1)
+    results[0]['avg_f1_score'] = sum_f1_score / max(num_open_qs, 1)
+    results[0]['avg_precision'] = sum_prec / max(num_open_qs, 1)
+    results[0]['avg_recall'] = sum_recall / max(num_open_qs, 1)
+    results[0]['avg_bleu_score'] = sum_bleu / max(num_open_qs, 1)
+    results[0]['avg_bleu_score_1'] = sum_bleu_1 / max(num_open_qs, 1)
+    results[0]['avg_bleu_score_2'] = sum_bleu_2 / max(num_open_qs, 1)
+    results[0]['avg_bleu_score_3'] =  sum_bleu_3   / max(num_open_qs, 1)
+    
+    return results
+
+def main(cfg):
+    pred_df = pd.read_json(cfg.model_output_file)
+    train_df = pd.read_json(cfg.model_train_file) 
+    val_df = pd.read_json(cfg.model_val_file) 
+    test_df = pd.read_json(cfg.model_test_file) 
+
+    # combine the dataframes to have one big dataframe containing all the samples with num_categories and list_categories columns
+    full_dataset = pd.concat([train_df, val_df, test_df], ignore_index=True)
+    pred_df = pred_df[(pred_df['qid'].isin(full_dataset['qid']))] # remove later
+                      
+    pred_df_closed = pred_df[pred_df['answer_type']=='CLOSED']
+    pred_df_open = pred_df[pred_df['answer_type']=='OPEN']
+
+    open_ended_results = evaluate_open_ended(pred_df_open)
+    close_ended_results = get_accuracy(pred_df_closed, full_dataset)
+    
+    if not Path(cfg.close_ended_metrics_file).parent.is_dir():
+        os.makedirs(Path(cfg.close_ended_metrics_file).parent)
+    with open(cfg.close_ended_metrics_file, 'w') as f:
+        json.dump(close_ended_results, f, indent=4, sort_keys=True)
+
+    if not Path(cfg.open_ended_metrics_file).parent.is_dir():
+        os.makedirs(Path(cfg.open_ended_metrics_file).parent)
+    with open(cfg.open_ended_metrics_file, 'w') as f:
+        json.dump(open_ended_results, f, indent=4, sort_keys=True)
 
 
 if __name__ == '__main__':
