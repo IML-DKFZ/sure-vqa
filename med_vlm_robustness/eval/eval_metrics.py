@@ -166,7 +166,7 @@ def get_accuracy(eval_data, data_categories):
         if answer_type == 'CLOSED': # calculate the metrics if the sample is closed ended
             sum_num_categories += num_categories
             num_qs +=  1 
-            if (gt in pred) or (pred in gt):
+            if ((gt in pred) or (pred in gt)) and ('yes, no' not in pred):
                 sum_correct += 1
                 line['accuracy'] = 1
             else:
