@@ -3,14 +3,12 @@ imageio==2.33.1
 MedPy==0.4.0
 ndjson==0.3.1
 nltk==3.8.1
-numpy==1.26.4
 omegaconf==2.3.0
 openai==1.12.0
 opencv_python_headless==4.9.0.80
 pandas==2.2.0
 pylidc==0.2.3
 pytorch_lightning==1.6.5
-torch==2.0.1
 tqdm==4.66.1
 transformers==4.31.0
 wandb==0.16.2
