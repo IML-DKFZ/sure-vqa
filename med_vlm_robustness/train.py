@@ -16,10 +16,12 @@ def main(cfg):
                                             dataset_name=cfg.dataset, split=cfg.train_split, 
                                             data_shift=cfg.data_shift, mod="train") # mod = train / val / test
     model_name = f"llava-{split_file_name}-finetune_{cfg.model_type}"
+    if cfg.hyperparams_model_name is not None:
+        model_name = f"{model_name}_{cfg.hyperparams_model_name}"
     cfg.output_dir = Path(os.getenv("EXPERIMENT_ROOT_DIR")) / cfg.dataset / cfg.model_type / model_name
 
-    if cfg.hyperparams_model_name is not None:
-        cfg.output_dir = f"{cfg.output_dir}_{cfg.hyperparams_model_name}"
+    if os.path.exists(f"{cfg.output_dir}/adapter_model.bin"):
+        exit(0)
 
     training_args = TrainingArguments(output_dir=cfg.output_dir, run_name=model_name)
     # TODO: Workaround for now because derived dataclasses cannot be instantiated with base class fields

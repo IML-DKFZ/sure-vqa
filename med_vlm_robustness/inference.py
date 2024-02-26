@@ -12,6 +12,7 @@ from utils import get_config, set_seed
 
 def main(cfg):
     if "seed" in cfg:
+        cfg.seed = int(cfg.seed)
         set_seed(cfg.seed)
     dm, split_file_name = get_datamodule(data_dir=Path(cfg.data_dir),
                        ood_value=cfg.ood_value, test_folder_name=cfg.test_folder_name,
