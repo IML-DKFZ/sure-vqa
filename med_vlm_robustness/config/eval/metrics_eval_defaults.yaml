@@ -3,8 +3,8 @@ dataset: "SLAKE"
 data_shift: "modality"
 ood_value: "X-Ray"
 train_split: "iid"
-split: "ood"
-model_type: "pretrained"
+split: "iid"
+model_type: "lora"
 metric_type: ["traditional_metrics", "mistral"]
 mod: "test"
 hyperparams_model_name: null
