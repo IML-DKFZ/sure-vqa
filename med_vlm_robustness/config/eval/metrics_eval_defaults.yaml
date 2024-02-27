@@ -3,22 +3,12 @@ dataset: "SLAKE"
 data_shift: "modality"
 ood_value: "X-Ray"
 train_split: "iid"
-split: "iid"
-model_type: "lora"
-metric_type: "traditional_metrics"
+split: "ood"
+model_type: "pretrained"
+metric_type: ["traditional_metrics", "mistral"]
+mod: "test"
+hyperparams_model_name: null
 
-split_file: "${dataset}_test_${split}_${data_shift}_${ood_value}"
-# split_file: "SLAKE_test_iid_modality_X-Ray"
-split_file_train: "${dataset}_train_${train_split}_${data_shift}_${ood_value}"
-# split_file_train:  "SLAKE_train_iid_modality_X-Ray"
-data_dir: ${data_root_dir}/${dataset}
-model_name: llava-${split_file_train}-finetune_${model_type}
-exp_path: ${oc.env:EXPERIMENT_ROOT_DIR}/${dataset}/${model_type}/${model_name}
-
-model_output_file: ${exp_path}/eval/${split_file}/test_results.json
-open_ended_metrics_file: ${exp_path}/eval/${split_file}/open_ended_${metric_type}.json
-close_ended_metrics_file: ${exp_path}/eval/${split_file}/close_ended_${metric_type}.json
 model_train_file: ${data_root_dir}/${dataset}/train.json
-model_val_file: ${data_root_dir}/${dataset}/val.json
+model_val_file: ${data_root_dir}/${dataset}/validate.json
 model_test_file: ${data_root_dir}/${dataset}/test.json
-averaged_metrics_file: ${exp_path}/eval/${split_file}/${metric_type}_averaged.json

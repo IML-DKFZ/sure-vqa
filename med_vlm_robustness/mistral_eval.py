@@ -1,3 +1,6 @@
+import time
+from typing import Optional
+
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import os
 import json
@@ -6,17 +9,14 @@ from tqdm import tqdm
 from pathlib import Path
 import re
 
-from utils import get_config
-
 MISTRAL_PROMPT_FILE_PATH = os.getenv("MISTRAL_PROMPT_FILE_PATH")
 
-def mistal_eval(config):
+def mistal_eval(model_output_file, mistral_eval_file:Optional[str] = None, batch_size:int = 16):
     mistral_output_list=[]
-    model_output_file = config.model_output_file
-    mistral_eval_file = config.metrics_file
 
     # Load model and tokenizer from huggingface
     tokenizer = AutoTokenizer.from_pretrained("mistralai/Mistral-7B-Instruct-v0.2")
+    tokenizer.pad_token = tokenizer.eos_token
     # load the model with float16 to fit the memory
     model = AutoModelForCausalLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.2", device_map='cuda', torch_dtype=torch.bfloat16)
 
@@ -28,76 +28,101 @@ def mistal_eval(config):
     with open(model_output_file, 'r') as file:
         model_output_data = json.load(file)
 
-    # Iterate over each item in the JSON array
+    complete_input_list = []
+    qids = []
+    questions = []
+    gts = []
+    preds = []
+    answer_types = []
+    idx = 0
+
     for line in tqdm(model_output_data):
-        qid = line["qid"]
-        question = line["question"]
-        gt = line["gt"]
-        pred = line["pred"]
-        answer_type = line["answer_type"]
-        
-        complete_input = initial_prompt + "[INST] " + str(line) + " [/INST]"
-        input_ids = tokenizer(complete_input, return_tensors="pt").input_ids.to("cuda")
+        if line["answer_type"] == "CLOSED" and idx != len(model_output_data) - 1:
+            idx += 1
+            continue
+        if line["answer_type"] == "OPEN":
+            qids.append(line["qid"])
+            questions.append(line["question"])
+            gts.append(line["gt"])
+            preds.append(line["pred"])
+            answer_types.append(line["answer_type"])
+            # TODO: Initial prompt might not be ideal since keys are different than in inference file
+            complete_input = initial_prompt + "[INST] " + str(line) + " [/INST]"
+            complete_input_list.append(complete_input)
+        #print(len(complete_input_list))
 
-        with torch.inference_mode():
-            output_ids = model.generate(
-                    input_ids,
-                    max_new_tokens=200,
-                )
-        input_token_len = input_ids.shape[1]
-        outputs = tokenizer.batch_decode(
-            output_ids[:, input_token_len:], skip_special_tokens=True
-        )[0]
-        outputs = outputs.strip()
+        if len(complete_input_list) == batch_size or idx == len(model_output_data) - 1:
+            input_ids = tokenizer(complete_input_list, return_tensors="pt", padding=True).input_ids.to("cuda")
+            with torch.inference_mode():
+                output_ids = model.generate(
+                        input_ids,
+                        max_new_tokens=200,
+                    )
+            input_token_len = input_ids.shape[1]
+            outputs = tokenizer.batch_decode(
+                output_ids[:, input_token_len:], skip_special_tokens=True
+            )
+            for i, output in enumerate(outputs):
+                qid = qids[i]
+                question = questions[i]
+                gt = gts[i]
+                pred = preds[i]
+                answer_type = answer_types[i]
+                output = output.strip()
 
-        try:
-            # get the score value in the model output
-            score_obj = re.search("###mistralscore=(.*)###", outputs)
-            score_obj_float= float(score_obj.group(1))
-            mistral_score = score_obj_float
-        except ValueError:
-            # Handle the case where the pattern is not found in the outputs
-            # Where the mistral score is not numeric therefore it cannot be converted to float() 
-            # Make the mistral score store the complete output so that it can be analyzed later
-            print("Retrieved mistral score object is being converted to float but it is not numeric")
-            print(f"Mistral score for the instance {qid} will be assigned to the complete text output of the Mistral model.")
-            print("Inspect this in the output JSON file")
-            mistral_score = outputs
-        except Exception as e:
-            # Handle other potential errors
-            print(f"Mistral score for the instance {qid} will be assigned to the complete text output of the Mistral model.")
-            print("Inspect this in the output JSON file")
-            print("This is the original error message:\n", e)
-            mistral_score = outputs
+                try:
+                    # get the score value in the model output
+                    score_obj = json.loads("{" + re.search("\"mistralscore\":(\s*)(\d*)", output).group(0) + "}")
+                    mistral_score = score_obj["mistralscore"]
+                    # mistral_score = score_obj_float
+                except ValueError:
+                    # Handle the case where the pattern is not found in the outputs
+                    # Where the mistral score is not numeric therefore it cannot be converted to float()
+                    # Make the mistral score store the complete output so that it can be analyzed later
+                    print("Retrieved mistral score object is being converted to float but it is not numeric")
+                    print(f"Mistral score for the instance {qid} will be assigned to the complete text output of the Mistral model.")
+                    print("Inspect this in the output JSON file")
+                    mistral_score = output
+                except Exception as e:
+                    # Handle other potential errors
+                    print(f"Mistral score for the instance {qid} will be assigned to the complete text output of the Mistral model.")
+                    print("Inspect this in the output JSON file")
+                    print("This is the original error message:\n", e)
+                    mistral_score = output
 
-        # create a dict from including the mdoel score
-        output_dict={
-            "qid": qid,
-            "question": question,
-            "gt": gt,
-            "pred": pred,
-            "answer_type": answer_type,
-            "mistral_score": mistral_score
-        }
-        mistral_output_list.append(output_dict)
+                # create a dict from including the mdoel score
+                output_dict={
+                    "qid": qid,
+                    "question": question,
+                    "gt": gt,
+                    "pred": pred,
+                    "answer_type": answer_type,
+                    "mistral_score": mistral_score
+                }
+                mistral_output_list.append(output_dict)
+            complete_input_list = []
+            qids = []
+            questions = []
+            gts = []
+            preds = []
+            answer_types = []
+        idx += 1
 
-    # save mistral evaluation as JSON
-    if not Path(mistral_eval_file).parent.is_dir():
-        os.makedirs(Path(mistral_eval_file).parent)
-    with open(mistral_eval_file, 'w') as json_file:
-        json.dump(mistral_output_list, json_file, indent=4)
+    mistral_output_list = average_mistral_metrics(mistral_output_list)
+    if mistral_eval_file is not None:
+        # save mistral evaluation as JSON
+        if not Path(mistral_eval_file).parent.is_dir():
+            os.makedirs(Path(mistral_eval_file).parent)
+        with open(mistral_eval_file, 'w') as json_file:
+            json.dump(mistral_output_list, json_file, indent=4)
+    else:
+        return mistral_output_list
 
-def average_mistral_metrics(cfg):
 
-    with open(config.metrics_file,'r') as f:
-        json_file = f.read()
-    mistral_output_file = json.loads(json_file)
-
-    sum_yes_no_score = 0
+def average_mistral_metrics(mistral_output_list):
     sum_open_ended_score = 0
     num_open_qs=0
-    num_closed_qs=0
-    for object in mistral_output_file:
+    for object in mistral_output_list:
         question_id = object["qid"]
         answer_type=object["answer_type"]
         mistral_score=object["mistral_score"]
@@ -105,28 +130,34 @@ def average_mistral_metrics(cfg):
         try:
             mistral_float_score = float(mistral_score)
 
-            if answer_type == "CLOSED":
-                sum_yes_no_score += mistral_float_score
-                num_closed_qs += 1
-            else:
+            if answer_type == "OPEN":
                 sum_open_ended_score += mistral_float_score
                 num_open_qs += 1
+            else:
+                continue
         except ValueError:
             print(f"mistral score is not numeric for the question id {question_id}, this instance will be skipped during average mistral score calculation")
             print("If this is not desired, check the mistral metrics JSON file to fix the error")
 
     average_scores = {
-        'avg_yes_no_acc': sum_yes_no_score / max(1, num_closed_qs), # workaround to make sure there is no zero division error
-        "avg_open_ended_acc": sum_open_ended_score / max(1, num_open_qs)
-        }
+        "avg_mistral_score": sum_open_ended_score / max(1, num_open_qs)
+    }
+    mistral_output_list.insert(0, average_scores)
 
-    if not Path(cfg.averaged_metrics_file).parent.is_dir():
-        os.makedirs(Path(cfg.averaged_metrics_file).parent)
-    with open(cfg.averaged_metrics_file, 'w') as f:
-        json.dump(average_scores, f, indent=4, sort_keys=True)
+    return mistral_output_list
 
 
 if __name__ == '__main__':
-    config = get_config()
-    mistal_eval(config)
-    average_mistral_metrics(config)
+    start = time.perf_counter()
+    model_output_file = "/nvme/VLMRobustness/Experiments/SLAKE/pretrained/eval/SLAKE_test_iid_modality_X-Ray/test_results.json"
+    mistral_eval_file = f"/nvme/VLMRobustness/Experiments/SLAKE/pretrained/eval/SLAKE_test_iid_modality_X-Ray/mistral_scores.json"
+    mistal_eval(model_output_file=model_output_file, mistral_eval_file=mistral_eval_file)
+    end = time.perf_counter()
+    time_sec = end - start
+    time_min = time_sec / 60
+    time_hours = time_min / 60
+    with open(f'/nvme/VLMRobustness/Experiments/SLAKE/pretrained/eval/SLAKE_test_iid_modality_X-Ray/time.txt', 'w') as f:
+        f.write(f'Eval took {time_sec:0.4f} seconds, {time_min:0.4f} minutes, {time_hours:0.4f} hours\n')
+    # config = get_config()
+    # mistal_eval(config)
+    # average_mistral_metrics(config)

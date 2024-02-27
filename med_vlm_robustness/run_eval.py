@@ -1,12 +1,10 @@
 import argparse
 import json
-import collections
-import random
 import pandas as pd
 from nltk.translate.bleu_score import sentence_bleu
-from eval.eval_metrics import calculate_exactmatch, calculate_f1score, bleu, \
-    calculate_appearance_with_normalization, get_accuracy, get_open_ended_metrics
+from eval.eval_metrics import calculate_exactmatch, calculate_f1score, get_accuracy, get_open_ended_metrics
 from eval.glossary import *
+from mistral_eval import mistal_eval
 
 from pathlib import Path
 from utils import get_config
@@ -15,11 +13,13 @@ import warnings
 
 warnings.simplefilter('ignore')
 
+
 def parse_option():
     parser = argparse.ArgumentParser('Evaluation for LLaVA Generated Outputs', add_help=False)
     parser.add_argument('--pred', type=str, help='path to prediction file', )
     args, unparsed = parser.parse_known_args()
     return args
+
 
 def evaluate(gt, pred, answer_type):
     gt = gt.lower()
@@ -59,6 +59,7 @@ def evaluate(gt, pred, answer_type):
             'bleu_score_2': b_score_2,
             'bleu_score_3': b_score_3,
         }
+
 
 def main_old(cfg):
     # set the params to calculate the average
@@ -188,8 +189,29 @@ def evaluate_open_ended(df):
     
     return results
 
+
+def get_eval_path(cfg):
+    if cfg.split == "all":
+        split_file_test = f"{cfg.dataset}_{cfg.mod}_{cfg.split}".replace(" ", "")
+    else:
+        split_category = cfg.data_shift
+        split_value = cfg.ood_value
+        split_file_test = f"{cfg.dataset}_{cfg.mod}_{cfg.split}_{split_category}_{split_value}".replace(" ", "")
+    split_file_train = split_file_test.replace(cfg.mod, 'train').replace('ood', 'iid')
+    model_name = f"llava-{split_file_train}-finetune_{cfg.model_type}"
+    if "hyperparams_model_name" in cfg and cfg.hyperparams_model_name is not None:
+        cfg.model_name = f"{cfg.model_name}_{cfg.hyperparams_model_name}"
+    if cfg.model_type != "pretrained":
+        eval_path = f"{os.getenv('EXPERIMENT_ROOT_DIR')}/{cfg.dataset}/{cfg.model_type}/{model_name}/eval/{split_file_test}"
+    else:
+        eval_path = f"{os.getenv('EXPERIMENT_ROOT_DIR')}/{cfg.dataset}/{cfg.model_type}/eval/{split_file_test}"
+    return Path(eval_path)
+
+
 def main(cfg):
-    pred_df = pd.read_json(cfg.model_output_file)
+    eval_path = get_eval_path(cfg)
+    model_output_file = eval_path / "test_results.json"
+    pred_df = pd.read_json(model_output_file)
     train_df = pd.read_json(cfg.model_train_file) 
     val_df = pd.read_json(cfg.model_val_file) 
     test_df = pd.read_json(cfg.model_test_file) 
@@ -201,18 +223,29 @@ def main(cfg):
     pred_df_closed = pred_df[pred_df['answer_type']=='CLOSED']
     pred_df_open = pred_df[pred_df['answer_type']=='OPEN']
 
-    open_ended_results = evaluate_open_ended(pred_df_open)
-    close_ended_results = get_accuracy(pred_df_closed, full_dataset)
-    
-    if not Path(cfg.close_ended_metrics_file).parent.is_dir():
-        os.makedirs(Path(cfg.close_ended_metrics_file).parent)
-    with open(cfg.close_ended_metrics_file, 'w') as f:
-        json.dump(close_ended_results, f, indent=4, sort_keys=True)
+    if "traditional_metrics" in cfg.metric_type:
+        open_ended_results = evaluate_open_ended(pred_df_open)
+        close_ended_results = get_accuracy(pred_df_closed, full_dataset)
 
-    if not Path(cfg.open_ended_metrics_file).parent.is_dir():
-        os.makedirs(Path(cfg.open_ended_metrics_file).parent)
-    with open(cfg.open_ended_metrics_file, 'w') as f:
-        json.dump(open_ended_results, f, indent=4, sort_keys=True)
+        close_ended_metrics_file = eval_path / "closed_ended_metrics.json"
+        if not Path(close_ended_metrics_file).parent.is_dir():
+            os.makedirs(Path(close_ended_metrics_file).parent)
+        with open(close_ended_metrics_file, 'w') as f:
+            json.dump(close_ended_results, f, indent=4, sort_keys=True)
+
+        open_ended_metrics_file = eval_path / "open_ended_metrics.json"
+        if not Path(open_ended_metrics_file).parent.is_dir():
+            os.makedirs(Path(open_ended_metrics_file).parent)
+        with open(open_ended_metrics_file, 'w') as f:
+            json.dump(open_ended_results, f, indent=4, sort_keys=True)
+
+    if "mistral" in cfg.metric_type:
+        mistral_scores = mistal_eval(model_output_file=model_output_file)
+        mistral_metrics_file = eval_path / "mistral_metrics.json"
+        if not Path(mistral_metrics_file).parent.is_dir():
+            os.makedirs(Path(mistral_metrics_file).parent)
+        with open(mistral_metrics_file, 'w') as json_file:
+            json.dump(mistral_scores, json_file, indent=4)
 
 
 if __name__ == '__main__':
