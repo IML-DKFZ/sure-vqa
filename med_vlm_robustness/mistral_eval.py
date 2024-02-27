@@ -46,7 +46,6 @@ def mistal_eval(model_output_file, mistral_eval_file:Optional[str] = None, batch
             gts.append(line["gt"])
             preds.append(line["pred"])
             answer_types.append(line["answer_type"])
-            # TODO: Initial prompt might not be ideal since keys are different than in inference file
             complete_input = initial_prompt + "[INST] " + str(line) + " [/INST]"
             complete_input_list.append(complete_input)
         #print(len(complete_input_list))
