@@ -7,7 +7,7 @@ data_shift: "modality"
 ood_value: "X-Ray"
 train_split: "iid"
 # lora, prompt,...
-model_type: "lora"
+model_type: "lora" # ai3, prompt
 # split_file: "${dataset}_train_${train_split}_${data_shift}_${ood_value}"
 # split_file: "SLAKE_train_iid_modality_X-Ray"
 data_dir: ${data_root_dir}/${dataset}
@@ -16,6 +16,7 @@ hyperparams_model_name: seed${training_args.seed}
 
 training_args:
   seed: 123
+  ia3_enable: false
   prompt_enable: false
   prompt_num_tokens: 80
   lora_enable: true

@@ -9,7 +9,7 @@ train_split: "iid"
 split: "iid"
 mod: "test"
 # lora, prompt,...
-model_type: "lora"
+model_type: "lora" #ai3
 seed: 123
 
 # split_file: "${dataset}_test_${split}_${data_shift}_${ood_value}"

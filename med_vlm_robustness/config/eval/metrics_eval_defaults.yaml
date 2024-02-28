@@ -4,7 +4,7 @@ data_shift: "modality"
 ood_value: "X-Ray"
 train_split: "iid"
 split: "iid"
-model_type: "lora"
+model_type: "lora" #ia3
 metric_type: ["traditional_metrics", "mistral"]
 mod: "test"
 hyperparams_model_name: null

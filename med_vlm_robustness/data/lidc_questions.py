@@ -102,27 +102,19 @@ def internal_structure_question(ratings: List[int], yes_no: bool):
 
 
 def calcification_question(ratings: List[int], yes_no: bool):
-    category_dict = {
-        1: "Popcorn",
-        2: "Laminated",
-        3: "Solid",
-        4: "Non-central",
-        5: "Central",
-        6: "Absent"
-    }
+    # category_dict = {
+    #     # 1: "Popcorn",
+    #     # 2: "Laminated",
+    #     3: "Solid",
+    #     # 4: "Non-central",
+    #     # 5: "Central",
+    #     6: "Absent"
+    # }
     majority_rating = get_majority_rating(ratings)
     if majority_rating is None:
         return None
 
-    if not yes_no:
-        return {
-            "question": "If the nodule in this scan shows calcification, what is the pattern of calcification?",
-            "answer": f"The nodule shows a {category_dict[majority_rating].lower()} calcification pattern."
-                        if majority_rating != 6 else "There is no calcification present in the nodule.",
-            "content_type": "calcification",
-            "answer_type": "OPEN",
-        }
-    else:
+    if yes_no:
         presence_question = random.choices([True, False])[0]
         if presence_question:
             return {
@@ -131,19 +123,36 @@ def calcification_question(ratings: List[int], yes_no: bool):
                 "content_type": "calcification",
                 "answer_type": "CLOSED",
             }
-        else:
-            category_ints = list(category_dict.keys())[:-1]
-            if majority_rating != 6:
-                probabilities = [0.5 if c == majority_rating else 0.5 / (len(category_ints) - 1) for c in category_ints]
-            else:
-                probabilities = None
-            random_element = random.choices(category_ints, weights=probabilities)[0]
-            return {
-                "question": f"Does the nodule in this scan show a {category_dict[random_element].lower()} calcification pattern?",
-                "answer": "Yes" if random_element == majority_rating else "No",
-                "content_type": "calcification",
-                "answer_type": "CLOSED",
-            }
+    # if not yes_no:
+    #     return {
+    #         "question": "If the nodule in this scan shows calcification, what is the pattern of calcification?",
+    #         "answer": f"The nodule shows a {category_dict[majority_rating].lower()} calcification pattern."
+    #                     if majority_rating != 6 else "There is no calcification present in the nodule.",
+    #         "content_type": "calcification",
+    #         "answer_type": "OPEN",
+    #     }
+    # else:
+    #     presence_question = random.choices([True, False])[0]
+    #     if presence_question:
+    #         return {
+    #             "question": f"Does the nodule in this scan show calcification?",
+    #             "answer": "Yes" if majority_rating != 6 else "No",
+    #             "content_type": "calcification",
+    #             "answer_type": "CLOSED",
+    #         }
+        # else:
+        #     category_ints = list(category_dict.keys())[:-1]
+        #     if majority_rating != 6:
+        #         probabilities = [0.5 if c == majority_rating else 0.5 / (len(category_ints) - 1) for c in category_ints]
+        #     else:
+        #         probabilities = None
+        #     random_element = random.choices(category_ints, weights=probabilities)[0]
+        #     return {
+        #         "question": f"Does the nodule in this scan show a {category_dict[random_element].lower()} calcification pattern?",
+        #         "answer": "Yes" if random_element == majority_rating else "No",
+        #         "content_type": "calcification",
+        #         "answer_type": "CLOSED",
+        #     }
 
 
 def margin_question(ratings: List[int], yes_no: bool):
@@ -343,8 +352,9 @@ def generate_lidc_data(lidc_path):
         questions_scan = []
         yes_no = random.choices([True, False])[0]
         questions_scan.append(subtlety_question(list(annotation["subtlety"]), yes_no=yes_no))
-        yes_no = random.choices([True, False])[0]
-        questions_scan.append(internal_structure_question(list(annotation["internal Structure"]), yes_no=yes_no))
+        # remove this part
+        # yes_no = random.choices([True, False])[0]
+        # questions_scan.append(internal_structure_question(list(annotation["internal Structure"]), yes_no=yes_no))
         yes_no = random.choices([True, False])[0]
         questions_scan.append(calcification_question(list(annotation["calcification"]), yes_no=yes_no))
         # We do not use sphericity since we only have 2D images
