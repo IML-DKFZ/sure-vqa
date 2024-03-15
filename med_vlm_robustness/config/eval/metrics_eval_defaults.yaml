@@ -7,7 +7,8 @@ split: "iid"
 model_type: "lora" #ia3
 metric_type: ["traditional_metrics", "mistral"]
 mod: "test"
-hyperparams_model_name: null
+seed: 123
+hyperparams_model_name: seed${seed}
 
 model_train_file: ${data_root_dir}/${dataset}/train.json
 model_val_file: ${data_root_dir}/${dataset}/validate.json

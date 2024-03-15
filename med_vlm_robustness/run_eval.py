@@ -200,7 +200,7 @@ def get_eval_path(cfg):
     split_file_train = split_file_test.replace(cfg.mod, 'train').replace('ood', 'iid')
     model_name = f"llava-{split_file_train}-finetune_{cfg.model_type}"
     if "hyperparams_model_name" in cfg and cfg.hyperparams_model_name is not None:
-        cfg.model_name = f"{cfg.model_name}_{cfg.hyperparams_model_name}"
+        model_name = f"{model_name}_{cfg.hyperparams_model_name}"
     if cfg.model_type != "pretrained":
         eval_path = f"{os.getenv('EXPERIMENT_ROOT_DIR')}/{cfg.dataset}/{cfg.model_type}/{model_name}/eval/{split_file_test}"
     else:

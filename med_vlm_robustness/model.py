@@ -55,6 +55,8 @@ class LLaVA_Med(pl.LightningModule):
         images = batch["image"]
         questions = batch["question"]
 
+        # TODO: Should we remove normalization in preprocessing here as well??
+        #  self.image_processor.do_normalize = False
         # generate the question form with image token
         images = self.image_processor.preprocess(images=images, return_tensors="pt")["pixel_values"]
         images = images.type(torch.float16)
