@@ -157,8 +157,8 @@ def get_accuracy(eval_data, data_categories):
         },]
     for i,line in eval_data.iterrows():
         qid = line['qid']
-        gt = line['gt'].lower()
-        pred = line['pred'].lower()
+        gt = line['gt'].lower().replace(".", "")
+        pred = line['pred'].lower().replace(".", "")
         answer_type = line['answer_type']
         # get the numberof categories and list of categories from the data_category dataframe
         num_categories = data_categories[data_categories['qid'] == qid]['num_categories'].iloc[0]
@@ -166,7 +166,7 @@ def get_accuracy(eval_data, data_categories):
         if answer_type == 'CLOSED': # calculate the metrics if the sample is closed ended
             sum_num_categories += num_categories
             num_qs +=  1 
-            if ((gt in pred) or (pred in gt)) and ('yes, no' not in pred):
+            if ((gt in pred) or (pred in gt)) and ('yes, no' not in pred) and len(pred) != 0:
                 sum_correct += 1
                 line['accuracy'] = 1
             else:
