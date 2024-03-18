@@ -30,7 +30,7 @@ def evaluate(gt, pred, answer_type):
 
     if answer_type == "CLOSED":
         # for close-ended question (Yes/No)
-        if (gt in pred) or (pred in gt):
+        if (gt in pred) or (pred in gt) and len(pred) != 0:
             yes_no_acc = 1
         else:
             yes_no_acc = 0
