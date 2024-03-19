@@ -8,6 +8,7 @@ import pytorch_lightning as pl
 from torch.utils.data import DataLoader
 
 from dataset import SlakeDataset
+from llava.constants import DEFAULT_IMAGE_TOKEN
 
 
 class SlakeDatamodule(pl.LightningDataModule):
@@ -185,7 +186,7 @@ def convert_raw_to_final(df, save_path):
             "conversations": [
                 {
                     "from": "human",
-                    "value": row["question"]
+                    "value": f"{DEFAULT_IMAGE_TOKEN}\n{row['question']}"
                 },
                 {
                     "from": "gpt",
@@ -218,7 +219,7 @@ def convert_ovqa_raw_to_final(df, save_path):
             "conversations": [
                 {
                     "from": "human",
-                    "value": row["question"]
+                    "value": f"{DEFAULT_IMAGE_TOKEN}\n{row['question']}"
                 },
                 {
                     "from": "gpt",
@@ -250,7 +251,7 @@ def convert_lidc_raw_to_final(df, save_path):
             "conversations": [
                 {
                     "from": "human",
-                    "value": row["question"]
+                    "value": f"{DEFAULT_IMAGE_TOKEN}\n{row['question']}"
                 },
                 {
                     "from": "gpt",
