@@ -207,7 +207,7 @@ def get_accuracy(eval_data, data_categories):
                 print("Question ID: ", qid, "| Ground truth: ", gt, "| Categories: ", ", ".join(categories),
                       "| Num matches: ", len(patterns_gt))
                 line['accuracy'] = np.nan
-            elif len(patterns_gt) != 1:
+            elif len(patterns_pred) != 1:
                 print("Prediction is ambiguous or none of the categories is in it!")
                 print("Question ID: ", qid, "| Prediction: ", pred, "| Categories: ", ", ".join(categories),
                       "| Num matches: ", len(patterns_gt))
