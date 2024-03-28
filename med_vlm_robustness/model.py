@@ -61,8 +61,8 @@ class LLaVA_Med(pl.LightningModule):
         images = self.image_processor.preprocess(images=images, return_tensors="pt")["pixel_values"]
         images = images.type(torch.float16)
         # TODO: change this to batch inference
-        questions = questions[0]
-        qs = DEFAULT_IMAGE_TOKEN + "\n" + questions  # -> image and below the text (question)
+        qs = questions[0]
+        #qs = DEFAULT_IMAGE_TOKEN + "\n" + questions  # -> image and below the text (question)
 
         # set up the conversation mode depending on the model
         if "llama-2" in self.model_name.lower():
