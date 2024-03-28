@@ -1,4 +1,7 @@
 import math
+import re
+
+import numpy as np
 from eval.utils import *
 from eval.glossary import *
 import json
@@ -146,36 +149,79 @@ def calculate_f1score(candidate, reference):
         else:
             return 2 * precision * recall / (precision + recall), precision, recall
         
-def get_accuracy(eval_data, data_categories):
+# def get_accuracy(eval_data, data_categories):
+#
+#     sum_correct = 0
+#     sum_num_categories = 0
+#     num_qs = 0
+#     results = [{
+#             'avg_accuracy': 0,
+#             'avg_num_categories' : 0,
+#         },]
+#     for i,line in eval_data.iterrows():
+#         qid = line['qid']
+#         gt = line['gt'].lower().replace(".", "")
+#         pred = line['pred'].lower().replace(".", "")
+#         answer_type = line['answer_type']
+#         # get the numberof categories and list of categories from the data_category dataframe
+#         num_categories = data_categories[data_categories['qid'] == qid]['num_categories'].iloc[0]
+#
+#         if answer_type == 'CLOSED': # calculate the metrics if the sample is closed ended
+#             sum_num_categories += num_categories
+#             num_qs +=  1
+#             if ((gt in pred) or (pred in gt)) and ('yes, no' not in pred) and len(pred) != 0:
+#                 sum_correct += 1
+#                 line['accuracy'] = 1
+#             else:
+#                 line['accuracy'] = 0
+#             results.append(line.to_dict())
+#
+#     results[0]['avg_accuracy'] = sum_correct / num_qs
+#     results[0]['avg_num_categories'] = sum_num_categories / num_qs
+#
+#     return results
 
-    sum_correct = 0 
-    sum_num_categories = 0
-    num_qs = 0
+def get_accuracy(eval_data, data_categories):
+    num_categories = []
     results = [{
-            'avg_accuracy': 0,
-            'avg_num_categories' : 0,
-        },]
-    for i,line in eval_data.iterrows():
+            'avg_accuracy': 0.,
+            'avg_num_categories': 0.,
+    }]
+    for i, line in eval_data.iterrows():
         qid = line['qid']
-        gt = line['gt'].lower().replace(".", "")
-        pred = line['pred'].lower().replace(".", "")
+        gt = line['gt']
+        pred = line['pred']
         answer_type = line['answer_type']
-        # get the numberof categories and list of categories from the data_category dataframe
-        num_categories = data_categories[data_categories['qid'] == qid]['num_categories'].iloc[0]
-        
-        if answer_type == 'CLOSED': # calculate the metrics if the sample is closed ended
-            sum_num_categories += num_categories
-            num_qs +=  1 
-            if ((gt in pred) or (pred in gt)) and ('yes, no' not in pred) and len(pred) != 0:
-                sum_correct += 1
+        categories = data_categories[data_categories['qid'] == qid]['list_categories'].iloc[0]
+        if answer_type == 'CLOSED':
+            patterns_gt = []
+            patterns_pred = []
+            for category in categories:
+                pattern = r'\b(?:{})\b(?:\s|$|,|.)'.format(category)
+                if len(re.findall(pattern, gt, re.IGNORECASE)) > 0:
+                    patterns_gt.append(pattern)
+                if len(re.findall(pattern, pred, re.IGNORECASE)) > 0:
+                    patterns_pred.append(pattern)
+            if len(patterns_gt) != 1:
+                print("Ground truth is ambiguous or none of the categories is in it!")
+                print("Question ID: ", qid, "| Ground truth: ", gt, "| Categories: ", ", ".join(categories),
+                      "| Num matches: ", len(patterns_gt))
+                line['accuracy'] = np.nan
+            elif len(patterns_gt) != 1:
+                print("Prediction is ambiguous or none of the categories is in it!")
+                print("Question ID: ", qid, "| Prediction: ", pred, "| Categories: ", ", ".join(categories),
+                      "| Num matches: ", len(patterns_gt))
+                line['accuracy'] = 0
+                num_categories.append(len(categories))
+            elif patterns_gt[0] == patterns_pred[0]:
                 line['accuracy'] = 1
+                num_categories.append(len(categories))
             else:
                 line['accuracy'] = 0
+                num_categories.append(len(categories))
             results.append(line.to_dict())
-    
-    results[0]['avg_accuracy'] = sum_correct / num_qs
-    results[0]['avg_num_categories'] = sum_num_categories / num_qs
-                
+    results[0]['avg_accuracy'] = np.nanmean(np.array([x["accuracy"] for x in results if "accuracy" in x]))
+    results[0]['avg_num_categories'] = np.nanmean(np.array(num_categories))
     return results
 
 def get_open_ended_metrics(gt, pred):
