@@ -144,11 +144,26 @@ def get_lidc_df(data_dir,test_folder_name, train_folder_name,
     if split == "all":
         return df
 
-    if mod == "train" or mod == "val" or (mod == "test" and split == "iid"):
-        df = df.loc[df[split_category] != split_value]
-    elif mod == "test" and split == "ood":
-        # Here we do not want to add anything from training to not mess up patients in training and test set
-        df = df.loc[df[split_category] == split_value]
+    if split_category in ["manufacturer"]:
+        if mod == "train" or mod == "val" or (mod == "test" and split == "iid"):
+            df = df.loc[df[split_category] != split_value]
+        elif mod == "test" and split == "ood":
+            # Here we do not want to add anything from training to not mess up patients in training and test set
+            df = df.loc[df[split_category] == split_value]
+    elif split_category in ["texture"]:
+        if split_value == "non-solid":
+            split_values_numerical = ["1.0", "2.0"]
+        else:
+            raise ValueError(f"Invalid split value: {split_value}")
+        if mod == "train" or mod == "val" or (mod == "test" and split == "iid"):
+            df = df.loc[~df[f"{split_category}_majority"].isin(split_values_numerical)]
+            df = df.loc[df["content_type"] != split_category]
+        elif mod == "test" and split == "ood":
+            # Here we do not want to add anything from training to not mess up patients in training and test set
+            df = df.loc[df[f"{split_category}_majority"].isin(split_values_numerical)]
+            df = df.loc[df["content_type"] != split_category]
+    else:
+        raise ValueError(f"Invalid split category: {split_category}")
     return df
 
 def get_datamodule(data_dir:Path, ood_value:str,
