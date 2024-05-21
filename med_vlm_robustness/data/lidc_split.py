@@ -5,6 +5,9 @@ from pathlib import Path
 
 import pandas as pd
 
+from med_vlm_robustness.utils import set_seed
+
+
 def main_cli():
     parser = ArgumentParser()
     parser.add_argument(
@@ -68,6 +71,6 @@ if __name__=="__main__":
         path = Path(path) / "LIDC"
     else:
         path = Path(cli_args.path)
-    random.seed(cli_args.seed)
+    set_seed(cli_args.seed)
     print(f"Random seed: {cli_args.seed}")
     create_lidc_split(lidc_path=path)
