@@ -125,7 +125,7 @@ def mistal_eval(model_output_file, mistral_eval_file:Optional[str] = None, batch
             answer_types = []
         idx += 1
 
-    mistral_output_list = average_mistral_metrics(mistral_output_list)
+    mistral_output_list = average_mistral_metrics(mistral_output_list, closed)
     if mistral_eval_file is not None:
         # save mistral evaluation as JSON
         if not Path(mistral_eval_file).parent.is_dir():
@@ -136,9 +136,11 @@ def mistal_eval(model_output_file, mistral_eval_file:Optional[str] = None, batch
         return mistral_output_list
 
 
-def average_mistral_metrics(mistral_output_list):
+def average_mistral_metrics(mistral_output_list, closed):
     sum_open_ended_score = 0
     num_open_qs=0
+    sum_closed_ended_score = 0
+    num_closed_qs=0
     for object in mistral_output_list:
         question_id = object["qid"]
         answer_type=object["answer_type"]
@@ -147,18 +149,30 @@ def average_mistral_metrics(mistral_output_list):
         try:
             mistral_float_score = float(mistral_score)
 
-            if answer_type == "OPEN":
-                sum_open_ended_score += mistral_float_score
-                num_open_qs += 1
+            if not closed:
+                if answer_type == "OPEN":
+                    sum_open_ended_score += mistral_float_score
+                    num_open_qs += 1
+                else:
+                    continue
             else:
-                continue
+                if answer_type == "CLOSED":
+                    sum_closed_ended_score += mistral_float_score
+                    num_closed_qs += 1
+                else:
+                    continue
         except ValueError:
             print(f"mistral score is not numeric for the question id {question_id}, this instance will be skipped during average mistral score calculation")
             print("If this is not desired, check the mistral metrics JSON file to fix the error")
 
-    average_scores = {
-        "avg_mistral_score": sum_open_ended_score / max(1, num_open_qs)
-    }
+    if not closed:
+        average_scores = {
+            "avg_mistral_score": sum_open_ended_score / max(1, num_open_qs)
+        }
+    else:
+        average_scores = {
+            "avg_mistral_score": sum_closed_ended_score / max(1, num_closed_qs)
+        }
     mistral_output_list.insert(0, average_scores)
 
     return mistral_output_list
