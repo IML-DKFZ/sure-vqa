@@ -5,7 +5,7 @@ ood_value: "X-Ray"
 train_split: "iid"
 split: "iid"
 model_type: "lora" #ia3
-metric_type: ["traditional_metrics", "mistral"]
+metric_type: ["traditional_metrics", "mistral", "mistral_closed"]
 mod: "test"
 seed: 123
 hyperparams_model_name: seed${seed}

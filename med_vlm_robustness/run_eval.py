@@ -247,6 +247,14 @@ def main(cfg):
         with open(mistral_metrics_file, 'w') as json_file:
             json.dump(mistral_scores, json_file, indent=4)
 
+    if "mistral_closed" in cfg.metric_type:
+        mistral_scores = mistal_eval(model_output_file=model_output_file, closed=True)
+        mistral_metrics_file = eval_path / "mistral_metrics_closed.json"
+        if not Path(mistral_metrics_file).parent.is_dir():
+            os.makedirs(Path(mistral_metrics_file).parent)
+        with open(mistral_metrics_file, 'w') as json_file:
+            json.dump(mistral_scores, json_file, indent=4)
+
 
 if __name__ == '__main__':
     config = get_config()
