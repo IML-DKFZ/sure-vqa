@@ -1,0 +1,16 @@
+base_dir: ${oc.env:EXPERIMENT_ROOT_DIR}
+dataset: "SLAKE"
+model_type: "lora"
+train_split: "iid"
+test_split: "all"
+mod: "test"
+hyperparams_compare:
+  rank: [16]
+  lr: ["3e-4"]
+hyperparams_summarize:
+  seed: [123, 124, 125]
+
+data_shift: "modality"
+ood_value: "X-Ray"
+
+output_file_name: "metrics_${data_shift}.csv"
