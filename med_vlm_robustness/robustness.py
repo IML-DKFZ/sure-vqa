@@ -65,8 +65,8 @@ def calc_robustness(cfg):
                 mistral_metrics_ood = json.load(f)
             mistral_score_ood = mistral_metrics_ood[0]["avg_mistral_score"]
 
-            rr_closed = (closed_ended_score_iid - closed_ended_score_ood) / closed_ended_score_iid
-            rr_mistral = (mistral_score_iid - mistral_score_ood) / mistral_score_iid
+            rr_closed = 1 - ((closed_ended_score_iid - closed_ended_score_ood) / closed_ended_score_iid)
+            rr_mistral = 1 - ((mistral_score_iid - mistral_score_ood) / mistral_score_iid)
 
             result_dict_iid[hyperparams_compare_str]["accuracy"].append(closed_ended_score_iid)
             result_dict_iid[hyperparams_compare_str]["mistral"].append(mistral_score_iid)
