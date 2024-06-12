@@ -33,12 +33,12 @@ def compare_metrics(cfg):
             hparams_model_name = "_".join([f"{key}{value}" for key, value in hyperparams.items()])
 
             results_dir = f"{base_dir}/{dataset}/{model_type}/llava-{dataset}_train_{train_split}-finetune_{model_type}_{hparams_model_name}/eval/{dataset}_{mod}_{test_split}"
-            closed_ended_metrics_file = f"{results_dir}/closed_ended_metrics.json"
+            closed_ended_metrics_file = f"{results_dir}/mistral_metrics_closed.json"
             if not os.path.isfile(closed_ended_metrics_file):
                 continue
             with open(closed_ended_metrics_file, "r") as f:
                 closed_ended_metrics = json.load(f)
-            closed_ended_score = closed_ended_metrics[0]["avg_accuracy"]
+            closed_ended_score = closed_ended_metrics[0]["avg_mistral_score"]
             mistral_metrics = f"{results_dir}/mistral_metrics.json"
             with open(mistral_metrics, "r") as f:
                 mistral_metrics = json.load(f)
