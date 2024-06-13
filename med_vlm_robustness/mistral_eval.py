@@ -47,25 +47,47 @@ def mistal_eval(model_output_file, mistral_eval_file:Optional[str] = None, batch
                 idx += 1
                 continue
             if line["answer_type"] == "OPEN":
-                qids.append(line["qid"])
-                questions.append(line["question"])
-                gts.append(line["gt"])
-                preds.append(line["pred"])
-                answer_types.append(line["answer_type"])
-                complete_input = initial_prompt + "[INST] " + str(line) + " [/INST]"
-                complete_input_list.append(complete_input)
+                if line["pred"] == line["gt"]:
+                    output_dict = {
+                        "qid": line["qid"],
+                        "question": line["question"],
+                        "gt": line["gt"],
+                        "pred": line["pred"],
+                        "answer_type": line["answer_type"],
+                        "mistral_score": 5
+                    }
+                    mistral_output_list.append(output_dict)
+                else:
+                    qids.append(line["qid"])
+                    questions.append(line["question"])
+                    gts.append(line["gt"])
+                    preds.append(line["pred"])
+                    answer_types.append(line["answer_type"])
+                    complete_input = initial_prompt + "[INST] " + str(line) + " [/INST]"
+                    complete_input_list.append(complete_input)
         else:
             if line["answer_type"] == "OPEN" and idx != len(model_output_data) - 1:
                 idx += 1
                 continue
             if line["answer_type"] == "CLOSED":
-                qids.append(line["qid"])
-                questions.append(line["question"])
-                gts.append(line["gt"])
-                preds.append(line["pred"])
-                answer_types.append(line["answer_type"])
-                complete_input = initial_prompt + "[INST] " + str(line) + " [/INST]"
-                complete_input_list.append(complete_input)
+                if line["pred"] == line["gt"]:
+                    output_dict = {
+                        "qid": line["qid"],
+                        "question": line["question"],
+                        "gt": line["gt"],
+                        "pred": line["pred"],
+                        "answer_type": line["answer_type"],
+                        "mistral_score": 1
+                    }
+                    mistral_output_list.append(output_dict)
+                else:
+                    qids.append(line["qid"])
+                    questions.append(line["question"])
+                    gts.append(line["gt"])
+                    preds.append(line["pred"])
+                    answer_types.append(line["answer_type"])
+                    complete_input = initial_prompt + "[INST] " + str(line) + " [/INST]"
+                    complete_input_list.append(complete_input)
         #print(len(complete_input_list))
 
         if len(complete_input_list) == batch_size or idx == len(model_output_data) - 1:
