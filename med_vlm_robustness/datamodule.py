@@ -111,7 +111,7 @@ def get_ovqa_df(data_dir,test_folder_name, train_folder_name,
     if split == "all":
         return df
 
-    if mod == "train" or mod == "validate" or (mod == "test" and split == "iid"):
+    if mod == "train" or mod == "val" or (mod == "test" and split == "iid"):
         df = df.loc[df[split_category] != split_value]
     elif mod == "test" and split == "ood":
         df_test = df.loc[df[split_category] == split_value]
@@ -126,6 +126,40 @@ def get_ovqa_df(data_dir,test_folder_name, train_folder_name,
             df_train = pd.read_json(data_dir / train_folder_name)
             df_train = df_train.loc[df_train[split_category] == split_value]
             df = pd.concat([df_test, df_train])
+    return df
+
+
+def get_mimic_df(data_dir, test_folder_name, train_folder_name,
+                val_folder_name, mod, split, split_category=None, split_value=None):
+    # mod -> train, val, test
+    dataset_name = {
+        "train": train_folder_name,
+        "val": val_folder_name,
+        "test": test_folder_name,
+    }
+
+    df = pd.read_json(data_dir / f"{dataset_name[mod]}")
+
+    if split == "all":
+        return df
+
+    if mod == "train" or mod == "val" or (mod == "test" and split == "iid"):
+        if split_category == "age" and split_value == "young":
+            df = df.loc[df[split_category] >= 60]
+        elif split_category == "ethnicity" and split_value == "nonwhite":
+            df = df.loc[df[split_category] == "WHITE"]
+        else:
+            df = df.loc[df[split_category] != split_value]
+    elif mod == "test" and split == "ood":
+        if split_category == "age" and split_value == "young":
+            df = df.loc[df[split_category] < 40]
+        elif split_category == "ethnicity" and split_value == "nonwhite":
+            df = df.loc[df[split_category] != "WHITE"]
+            df = df.loc[df[split_category] != "UNKNOWN/OTHER"]
+        else:
+            df = df.loc[df[split_category] == split_value]
+    if split_category == "gender":
+        df = df.loc[df["content_type"] != "gender"]
     return df
 
 
@@ -288,6 +322,42 @@ def convert_lidc_raw_to_final(df, save_path):
         json.dump(final_data, output_file, indent=4)
 
 
+def convert_mimic_raw_to_final(df, save_path):
+    final_data = []
+
+    # Process each entry as a separate conversation
+    for _, row in df.iterrows():
+        qid = row["qid"]
+        new_entry = {
+            "id": str(qid),
+            "image": f"mimic-cxr-vqa/physionet.org/files/mimic-cxr-jpg/2.0.0/files/" + f"{row['image_path']}",
+            "conversations": [
+                {
+                    "from": "human",
+                    "value": f"{DEFAULT_IMAGE_TOKEN}\n{row['question']}"
+                },
+                {
+                    "from": "gpt",
+                    "value": row["answer"]
+                }
+            ],
+            "subject_id": row["subject_id"],
+            "study_id": row["study_id"],
+            "image_id": row["image_id"],
+            "semantic_type": row["semantic_type"],
+            "content_type": row["content_type"],
+            "answer_type": row["answer_type"],
+            "gender": row["gender"],
+            "age": row["age"],
+            "year": row["year"],
+            "ethnicity": row["ethnicity"]
+        }
+        final_data.append(new_entry)
+
+    with open(str(save_path), 'w') as output_file:
+        json.dump(final_data, output_file, indent=4)
+
+
 def get_json_filename(data_dir:Path, ood_value:str,
                       test_folder_name:str, train_folder_name:str,
                       val_folder_name:str,mod:str,dataset_name:str, 
@@ -343,6 +413,11 @@ def get_json_filename(data_dir:Path, ood_value:str,
                               train_folder_name=train_folder_name, val_folder_name=val_folder_name, mod=mod,
                               split=split, split_category=split_category, split_value=split_value)
             convert_lidc_raw_to_final(df, data_dir / "split_files" / f"{output_file_name}.json")
+        elif dataset_name == "MIMIC":
+            df = get_mimic_df(data_dir=data_dir, test_folder_name=test_folder_name,
+                              train_folder_name=train_folder_name, val_folder_name=val_folder_name, mod=mod,
+                              split=split, split_category=split_category, split_value=split_value)
+            convert_mimic_raw_to_final(df, data_dir / "split_files" / f"{output_file_name}.json")
         else:
             raise NotImplementedError(f"Dataset {dataset_name} not implemented")
 

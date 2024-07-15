@@ -6,7 +6,7 @@ In order to access the MIMIC-CXR-VQA dataset, you have to be a credentialed used
 The exact information how to download the dataset and construct the questions can be found [here](https://github.com/baeseongsu/mimic-cxr-vqa). After following these steps, your folder structure should look like this:
 
 ```
-MIMIC_CXR_VQA
+MIMIC
 └── mimic-cxr-vqa
     └── dataset_builder
     └── mimiccxrvqa

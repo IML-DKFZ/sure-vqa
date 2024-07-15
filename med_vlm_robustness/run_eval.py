@@ -225,7 +225,16 @@ def main(cfg):
 
     if "traditional_metrics" in cfg.metric_type:
         open_ended_results = evaluate_open_ended(pred_df_open)
-        close_ended_results = get_accuracy(pred_df_closed, full_dataset)
+        if cfg.dataset != "MIMIC":
+            close_ended_results = get_accuracy(pred_df_closed, full_dataset)
+        else:
+            if cfg.mod == "train":
+                dataset = train_df
+            elif cfg.mod == "val":
+                dataset = val_df
+            else:
+                dataset = test_df
+            close_ended_results = get_accuracy(pred_df_closed, dataset)
 
         close_ended_metrics_file = eval_path / "closed_ended_metrics.json"
         if not Path(close_ended_metrics_file).parent.is_dir():
