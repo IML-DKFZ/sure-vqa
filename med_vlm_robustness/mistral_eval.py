@@ -91,6 +91,8 @@ def mistal_eval(model_output_file, mistral_eval_file:Optional[str] = None, batch
         #print(len(complete_input_list))
 
         if len(complete_input_list) == batch_size or idx == len(model_output_data) - 1:
+            if idx == len(model_output_data) - 1 and len(complete_input_list) == 0:
+                continue
             input_ids = tokenizer(complete_input_list, return_tensors="pt", padding=True).input_ids.to("cuda")
             with torch.inference_mode():
                 output_ids = model.generate(
