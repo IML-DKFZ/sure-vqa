@@ -143,6 +143,12 @@ def get_mimic_df(data_dir, test_folder_name, train_folder_name,
     if split == "all":
         return df
 
+    if split == "sample":
+        if mod == "train":
+            return df.sample(n=20000, random_state=123)
+        else:
+            return df.sample(n=5000, random_state=123)
+
     if mod == "train" or mod == "val" or (mod == "test" and split == "iid"):
         if split_category == "age" and split_value == "young":
             df = df.loc[df[split_category] >= 60]
@@ -381,7 +387,7 @@ def get_json_filename(data_dir:Path, ood_value:str,
                 path to the output file
     '''
 
-    if split == "all":
+    if split == "all" or split == "sample":
         split_category = None
         split_value = None
         output_file_name = f"{dataset_name}_{mod}_{split}".replace(" ", "")
