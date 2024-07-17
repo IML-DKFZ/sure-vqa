@@ -49,7 +49,9 @@ def compare_metrics(cfg):
 
     print(result_dict)
     for key, value in result_dict.items():
-        if len(value["accuracy"]) == 0:
+        if len(value["accuracy"]) < 3:
+            if len(value["accuracy"]) > 0:
+                print(f"WARNING: less than 3 (but more than 0) values for: {key}, skipping")
             result_dict[key]["accuracy"] = "NaN"
             result_dict[key]["mistral"] = "NaN"
             continue
