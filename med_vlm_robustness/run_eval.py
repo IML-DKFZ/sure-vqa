@@ -191,7 +191,7 @@ def evaluate_open_ended(df):
 
 
 def get_eval_path(cfg):
-    if cfg.split == "all":
+    if cfg.split == "all" or cfg.split == "sample":
         split_file_test = f"{cfg.dataset}_{cfg.mod}_{cfg.split}".replace(" ", "")
     else:
         split_category = cfg.data_shift
