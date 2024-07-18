@@ -217,12 +217,16 @@ def get_datamodule(data_dir:Path, ood_value:str,
                                   dataset_name=dataset_name, mod = mod, split=split, data_shift=data_shift)
     print(json_file_path)
     df = pd.read_json(json_file_path)
+    # TODO: probably only one datamodule for all datasets without check for dataset_name
     if dataset_name == "SLAKE":
         return SlakeDatamodule(data_dir=data_dir, batch_size=batch_size, df=df, num_workers=num_workers), json_file_name
     elif dataset_name == "OVQA":
         # TODO : rename this as datamodule
         return SlakeDatamodule(data_dir=data_dir, batch_size=batch_size, df=df, num_workers=num_workers), json_file_name
     elif dataset_name == "LIDC":
+        # TODO : rename this as datamodule
+        return SlakeDatamodule(data_dir=data_dir, batch_size=batch_size, df=df, num_workers=num_workers), json_file_name
+    elif dataset_name == "MIMIC":
         # TODO : rename this as datamodule
         return SlakeDatamodule(data_dir=data_dir, batch_size=batch_size, df=df, num_workers=num_workers), json_file_name
     else:
