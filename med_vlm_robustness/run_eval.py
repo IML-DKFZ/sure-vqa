@@ -269,7 +269,7 @@ def main(cfg):
             mistral_scores = mistal_eval(model_output_file=model_output_file, closed=True, data_categories=dataset)
             mistral_scores_multilabel = mistal_eval(model_output_file=model_output_file, closed=True, multilabel=True,
                                                     data_categories=dataset)
-            mistral_scores = [*mistral_scores[1:], *mistral_sco impores_multilabel[1:]]
+            mistral_scores = [*mistral_scores[1:], *mistral_scores_multilabel[1:]]
             mistral_scores = average_mistral_metrics(mistral_scores, closed=True)
         mistral_metrics_file = eval_path / "mistral_metrics_closed.json"
         if not Path(mistral_metrics_file).parent.is_dir():
