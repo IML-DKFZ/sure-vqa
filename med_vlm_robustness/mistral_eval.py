@@ -11,7 +11,7 @@ import re
 
 MISTRAL_PROMPT_FILE_PATH = os.getenv("MISTRAL_PROMPT_FILE_PATH")
 
-def mistal_eval(model_output_file, mistral_eval_file:Optional[str] = None, batch_size:int = 16, closed=False):
+def mistal_eval(model_output_file, mistral_eval_file:Optional[str] = None, batch_size:int = 16, closed=False, multilabel=False, data_categories=None):
     mistral_output_list=[]
 
     # Load model and tokenizer from huggingface
@@ -24,8 +24,12 @@ def mistal_eval(model_output_file, mistral_eval_file:Optional[str] = None, batch
     if not closed:
         with open(MISTRAL_PROMPT_FILE_PATH,'r') as f:
             initial_prompt = f.read()
-    else:
+    elif closed and not multilabel:
         mistral_prompt_file_path = os.getenv("MISTRAL_PROMPT_FILE_PATH_CLOSED")
+        with open(mistral_prompt_file_path,'r') as f:
+            initial_prompt = f.read()
+    else:
+        mistral_prompt_file_path = os.getenv("MISTRAL_PROMPT_FILE_PATH_MULTILABEL")
         with open(mistral_prompt_file_path,'r') as f:
             initial_prompt = f.read()
     
@@ -70,24 +74,72 @@ def mistal_eval(model_output_file, mistral_eval_file:Optional[str] = None, batch
                 idx += 1
                 continue
             if line["answer_type"] == "CLOSED":
-                if line["pred"] == line["gt"]:
-                    output_dict = {
-                        "qid": line["qid"],
-                        "question": line["question"],
-                        "gt": line["gt"],
-                        "pred": line["pred"],
-                        "answer_type": line["answer_type"],
-                        "mistral_score": 1
-                    }
-                    mistral_output_list.append(output_dict)
+                if data_categories is not None:
+                    categories = data_categories[data_categories['qid'] == line["qid"]]['list_categories'].iloc[0]
                 else:
-                    qids.append(line["qid"])
-                    questions.append(line["question"])
-                    gts.append(line["gt"])
-                    preds.append(line["pred"])
-                    answer_types.append(line["answer_type"])
-                    complete_input = initial_prompt + "[INST] " + str(line) + " [/INST]"
-                    complete_input_list.append(complete_input)
+                    categories = None
+                if categories is None:
+                    if line["pred"] == line["gt"]:
+                        output_dict = {
+                            "qid": line["qid"],
+                            "question": line["question"],
+                            "gt": line["gt"],
+                            "pred": line["pred"],
+                            "answer_type": line["answer_type"],
+                            "mistral_score": 1
+                        }
+                        mistral_output_list.append(output_dict)
+                    else:
+                        qids.append(line["qid"])
+                        questions.append(line["question"])
+                        gts.append(line["gt"])
+                        preds.append(line["pred"])
+                        answer_types.append(line["answer_type"])
+                        complete_input = initial_prompt + "[INST] " + str(line) + " [/INST]"
+                        complete_input_list.append(complete_input)
+                elif len(categories) == 2 and not multilabel:
+                    if line["pred"] == line["gt"]:
+                        output_dict = {
+                            "qid": line["qid"],
+                            "question": line["question"],
+                            "gt": line["gt"],
+                            "pred": line["pred"],
+                            "answer_type": line["answer_type"],
+                            "mistral_score": 1
+                        }
+                        mistral_output_list.append(output_dict)
+                    else:
+                        qids.append(line["qid"])
+                        questions.append(line["question"])
+                        gts.append(line["gt"])
+                        preds.append(line["pred"])
+                        answer_types.append(line["answer_type"])
+                        complete_input = initial_prompt + "[INST] " + str(line) + " [/INST]"
+                        complete_input_list.append(complete_input)
+                elif len(categories) > 2 and not multilabel:
+                    idx += 1
+                elif len(categories) > 2 and multilabel:
+                    if line["pred"] == line["gt"]:
+                        output_dict = {
+                            "qid": line["qid"],
+                            "question": line["question"],
+                            "gt": line["gt"],
+                            "pred": line["pred"],
+                            "answer_type": line["answer_type"],
+                            "mistral_score": 1
+                        }
+                        mistral_output_list.append(output_dict)
+                    else:
+                        qids.append(line["qid"])
+                        questions.append(line["question"])
+                        gts.append(line["gt"])
+                        preds.append(line["pred"])
+                        answer_types.append(line["answer_type"])
+                        complete_input = initial_prompt + "[INST] " + str(line) + " [/INST]"
+                        complete_input_list.append(complete_input)
+                else:
+                    idx += 1
+
         #print(len(complete_input_list))
 
         if len(complete_input_list) == batch_size or idx == len(model_output_data) - 1:
@@ -113,7 +165,7 @@ def mistal_eval(model_output_file, mistral_eval_file:Optional[str] = None, batch
 
                 try:
                     # get the score value in the model output
-                    score_obj = json.loads("{" + re.search("\"mistralscore\":(\s*)(\d*)", output).group(0) + "}")
+                    score_obj = json.loads("{" + re.search("\"mistralscore\":(\s*)(\d*.?\d*)", output).group(0) + "}")
                     mistral_score = score_obj["mistralscore"]
                     # mistral_score = score_obj_float
                 except ValueError:
