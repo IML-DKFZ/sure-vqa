@@ -11,7 +11,8 @@ mod: "test"
 # lora, prompt,...
 model_type: "lora" #ai3
 seed: 123
-no_image: False 
+no_image: False
+train_no_image: False
 
 # split_file: "${dataset}_test_${split}_${data_shift}_${ood_value}"
 # split_file: "SLAKE_test_iid_modality_X-Ray"

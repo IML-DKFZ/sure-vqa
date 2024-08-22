@@ -23,6 +23,13 @@ def main(cfg):
     dm.setup()
 
     split_file_train = split_file_name.replace(cfg.mod, 'train').replace('ood', 'iid')
+
+    if not cfg.train_no_image and cfg.no_image: # When the model is trained with images but inference is without images
+        split_file_train = split_file_train.split('_no_image')[0]
+    
+    if cfg.train_no_image and not cfg.no_image: # When the model is trained without images but inference is with images
+        split_file_train = split_file_train + '_no_image'
+
     print(f"Split file train: {split_file_train}")
     if "model_name" not in cfg:
         cfg["model_name"] = f"llava-{split_file_train}-finetune_{cfg.model_type}"

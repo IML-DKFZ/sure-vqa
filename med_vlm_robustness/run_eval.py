@@ -198,17 +198,19 @@ def get_eval_path(cfg):
         split_value = cfg.ood_value
         split_file_test = f"{cfg.dataset}_{cfg.mod}_{cfg.split}_{split_category}_{split_value}".replace(" ", "")
     split_file_train = split_file_test.replace(cfg.mod, 'train').replace('ood', 'iid')
-    model_name = f"llava-{split_file_train}-finetune_{cfg.model_type}"
+
+    if cfg.train_no_image:
+        split_file_train = split_file_train + '_no_image'
     if cfg.no_image:
-        model_name = f"llava-{split_file_train}_no_image-finetune_{cfg.model_type}"
+        split_file_test = split_file_test + '_no_image'
+
+    model_name = f"llava-{split_file_train}-finetune_{cfg.model_type}"
     if "hyperparams_model_name" in cfg and cfg.hyperparams_model_name is not None:
         model_name = f"{model_name}_{cfg.hyperparams_model_name}"
     if cfg.model_type != "pretrained":
         eval_path = f"{os.getenv('EXPERIMENT_ROOT_DIR')}/{cfg.dataset}/{cfg.model_type}/{model_name}/eval/{split_file_test}"
     else:
         eval_path = f"{os.getenv('EXPERIMENT_ROOT_DIR')}/{cfg.dataset}/{cfg.model_type}/eval/{split_file_test}"
-    if cfg.no_image:
-        eval_path = eval_path + '_no_image'
     return Path(eval_path)
 
 
