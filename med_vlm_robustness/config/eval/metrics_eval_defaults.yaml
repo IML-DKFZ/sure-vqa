@@ -9,6 +9,7 @@ metric_type: ["traditional_metrics", "mistral", "mistral_closed"]
 mod: "test"
 seed: 123
 hyperparams_model_name: seed${seed}
+no_image: False
 
 model_train_file: ${data_root_dir}/${dataset}/train.json
 model_val_file: ${data_root_dir}/${dataset}/validate.json

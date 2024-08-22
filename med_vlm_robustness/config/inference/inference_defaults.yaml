@@ -11,6 +11,7 @@ mod: "test"
 # lora, prompt,...
 model_type: "lora" #ai3
 seed: 123
+no_image: False 
 
 # split_file: "${dataset}_test_${split}_${data_shift}_${ood_value}"
 # split_file: "SLAKE_test_iid_modality_X-Ray"
@@ -20,7 +21,6 @@ data_dir: ${data_root_dir}/${dataset}
 # model_path: ${oc.env:EXPERIMENT_ROOT_DIR}/${dataset}/LoRA/llava-${split_file_train}
 hyperparams_model_name: seed${seed}
 # model_path: ${oc.env:EXPERIMENT_ROOT_DIR}/${dataset}/${model_type}/llava-${split_file_train}-finetune_${model_type}
-
 
 # set the base model with the llava_med pretrained weights
 model_base: ${oc.env:LLAVA_MED_MODEL_PATH}

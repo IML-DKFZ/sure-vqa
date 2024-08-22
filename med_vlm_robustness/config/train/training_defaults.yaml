@@ -12,6 +12,7 @@ model_type: "lora" # ai3, prompt
 # split_file: "SLAKE_train_iid_modality_X-Ray"
 data_dir: ${data_root_dir}/${dataset}
 hyperparams_model_name: seed${training_args.seed}
+no_image: False
 # output_dir: ${oc.env:EXPERIMENT_ROOT_DIR}/${dataset}/${model_type}/llava-${split_file}-finetune_${model_type}
 
 training_args:
@@ -34,7 +35,7 @@ training_args:
   gradient_accumulation_steps: 1
   evaluation_strategy: "no"
   save_strategy: "steps"
-  save_steps: 500
+  save_steps: 100000 # was 500 before
   save_total_limit: 1
   learning_rate: 2e-5
   weight_decay: 0.
@@ -47,6 +48,7 @@ training_args:
   dataloader_num_workers: 4
   lazy_preprocess: true
   tune_mm_mlp_adapter: True
+  train_vision_tower: False # defaults to false
 
 model_args:
   # model_name_or_path: "liuhaotian/llava-v1.5-7b"
