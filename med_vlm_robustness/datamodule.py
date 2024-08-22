@@ -149,6 +149,34 @@ def get_mimic_df(data_dir, test_folder_name, train_folder_name,
         else:
             return df.sample(n=5000, random_state=123)
 
+    if split == "sample_iid":
+        if split_category == "age" and split_value == "young":
+            df = df.loc[df[split_category] >= 60]
+        elif split_category == "ethnicity" and split_value == "nonwhite":
+            df = df.loc[df[split_category] == "WHITE"]
+        else:
+            df = df.loc[df[split_category] != split_value]
+
+        if mod == "train":
+            return df.sample(n=20000, random_state=123)
+        else:
+            return df.sample(n=5000, random_state=123)
+    
+
+    if split == "sample_ood":
+        if split_category == "age" and split_value == "young":
+            df = df.loc[df[split_category] < 40]
+        elif split_category == "ethnicity" and split_value == "nonwhite":
+            df = df.loc[df[split_category] != "WHITE"]
+            df = df.loc[df[split_category] != "UNKNOWN/OTHER"]
+        else:
+            df = df.loc[df[split_category] == split_value]
+
+        if mod == "train":
+            return df.sample(n=20000, random_state=123)
+        else:
+            return df.sample(n=5000, random_state=123)
+        
     if mod == "train" or mod == "val" or (mod == "test" and split == "iid"):
         if split_category == "age" and split_value == "young":
             df = df.loc[df[split_category] >= 60]
@@ -209,12 +237,12 @@ def get_lidc_df(data_dir,test_folder_name, train_folder_name,
 def get_datamodule(data_dir:Path, ood_value:str,
                    test_folder_name:str,train_folder_name:str,
                    val_folder_name:str,mod:str, dataset_name:str, 
-                   split:str, data_shift:str, batch_size:int, num_workers:int = 0):
+                   split:str, data_shift:str, batch_size:int, num_workers:int = 0, no_image=False):
     
     json_file_path, json_file_name = get_json_filename(data_dir=data_dir,
                                   ood_value=ood_value,test_folder_name=test_folder_name, 
                                   train_folder_name=train_folder_name,val_folder_name=val_folder_name,
-                                  dataset_name=dataset_name, mod = mod, split=split, data_shift=data_shift)
+                                  dataset_name=dataset_name, mod = mod, split=split, data_shift=data_shift, no_image=no_image)
     print(json_file_path)
     df = pd.read_json(json_file_path)
     # TODO: probably only one datamodule for all datasets without check for dataset_name
@@ -233,7 +261,7 @@ def get_datamodule(data_dir:Path, ood_value:str,
         raise NotImplementedError(f"Dataset {dataset_name} not implemented")
 
 
-def convert_raw_to_final(df, save_path):
+def convert_raw_to_final(df, save_path, no_image=False):
     final_data = []
 
     # Process each entry as a separate conversation
@@ -245,7 +273,7 @@ def convert_raw_to_final(df, save_path):
             "conversations": [
                 {
                     "from": "human",
-                    "value": f"{DEFAULT_IMAGE_TOKEN}\n{row['question']}"
+                    "value": f"{DEFAULT_IMAGE_TOKEN}\n{row['question']}" if not no_image else row['question']
                 },
                 {
                     "from": "gpt",
@@ -266,7 +294,7 @@ def convert_raw_to_final(df, save_path):
         json.dump(final_data, output_file, indent=4)
 
 
-def convert_ovqa_raw_to_final(df, save_path):
+def convert_ovqa_raw_to_final(df, save_path, no_image=False):
     final_data = []
 
     # Process each entry as a separate conversation
@@ -278,7 +306,7 @@ def convert_ovqa_raw_to_final(df, save_path):
             "conversations": [
                 {
                     "from": "human",
-                    "value": f"{DEFAULT_IMAGE_TOKEN}\n{row['question']}"
+                    "value": f"{DEFAULT_IMAGE_TOKEN}\n{row['question']}" if not no_image else row['question']
                 },
                 {
                     "from": "gpt",
@@ -298,7 +326,7 @@ def convert_ovqa_raw_to_final(df, save_path):
         json.dump(final_data, output_file, indent=4)
 
 
-def convert_lidc_raw_to_final(df, save_path):
+def convert_lidc_raw_to_final(df, save_path, no_image=False):
     final_data = []
 
     # Process each entry as a separate conversation
@@ -310,7 +338,7 @@ def convert_lidc_raw_to_final(df, save_path):
             "conversations": [
                 {
                     "from": "human",
-                    "value": f"{DEFAULT_IMAGE_TOKEN}\n{row['question']}"
+                    "value": f"{DEFAULT_IMAGE_TOKEN}\n{row['question']}" if not no_image else row['question']
                 },
                 {
                     "from": "gpt",
@@ -332,7 +360,7 @@ def convert_lidc_raw_to_final(df, save_path):
         json.dump(final_data, output_file, indent=4)
 
 
-def convert_mimic_raw_to_final(df, save_path):
+def convert_mimic_raw_to_final(df, save_path, no_image=False):
     final_data = []
 
     # Process each entry as a separate conversation
@@ -344,7 +372,7 @@ def convert_mimic_raw_to_final(df, save_path):
             "conversations": [
                 {
                     "from": "human",
-                    "value": f"{DEFAULT_IMAGE_TOKEN}\n{row['question']}"
+                    "value": f"{DEFAULT_IMAGE_TOKEN}\n{row['question']}" if not no_image else row['question']
                 },
                 {
                     "from": "gpt",
@@ -371,7 +399,7 @@ def convert_mimic_raw_to_final(df, save_path):
 def get_json_filename(data_dir:Path, ood_value:str,
                       test_folder_name:str, train_folder_name:str,
                       val_folder_name:str,mod:str,dataset_name:str, 
-                      split:str, data_shift:str):
+                      split:str, data_shift:str, no_image:bool = False):
     ''' 
     # TODO: add explanation here
     dataset_name: This is the name of the file you want to load (train, test, val)
@@ -400,6 +428,9 @@ def get_json_filename(data_dir:Path, ood_value:str,
         split_value = ood_value
         output_file_name = f"{dataset_name}_{mod}_{split}_{split_category}_{split_value}".replace(" ", "")
 
+    if no_image:
+        output_file_name = output_file_name + '_no_image'
+
     if not os.path.isdir(data_dir / "split_files"):
         os.makedirs(data_dir / "split_files")
 
@@ -410,24 +441,24 @@ def get_json_filename(data_dir:Path, ood_value:str,
             df = get_slake_df(data_dir=data_dir, test_folder_name=test_folder_name,
                               train_folder_name=train_folder_name,val_folder_name=val_folder_name,mod=mod, 
                               split=split, split_category=split_category, split_value=split_value)
-            convert_raw_to_final(df, data_dir / "split_files" / f"{output_file_name}.json")
+            convert_raw_to_final(df, data_dir / "split_files" / f"{output_file_name}.json", no_image=no_image)
         elif dataset_name == "OVQA":
             if split_value is not None:
                 split_value = split_value.replace("_", " ")
             df = get_ovqa_df(data_dir=data_dir, test_folder_name=test_folder_name,
                               train_folder_name=train_folder_name,val_folder_name=val_folder_name,mod=mod, 
                               split=split, split_category=split_category, split_value=split_value)
-            convert_ovqa_raw_to_final(df, data_dir / "split_files" / f"{output_file_name}.json")
+            convert_ovqa_raw_to_final(df, data_dir / "split_files" / f"{output_file_name}.json", no_image=no_image)
         elif dataset_name == "LIDC":
             df = get_lidc_df(data_dir=data_dir, test_folder_name=test_folder_name,
                               train_folder_name=train_folder_name, val_folder_name=val_folder_name, mod=mod,
                               split=split, split_category=split_category, split_value=split_value)
-            convert_lidc_raw_to_final(df, data_dir / "split_files" / f"{output_file_name}.json")
+            convert_lidc_raw_to_final(df, data_dir / "split_files" / f"{output_file_name}.json", no_image=no_image)
         elif dataset_name == "MIMIC":
             df = get_mimic_df(data_dir=data_dir, test_folder_name=test_folder_name,
                               train_folder_name=train_folder_name, val_folder_name=val_folder_name, mod=mod,
                               split=split, split_category=split_category, split_value=split_value)
-            convert_mimic_raw_to_final(df, data_dir / "split_files" / f"{output_file_name}.json")
+            convert_mimic_raw_to_final(df, data_dir / "split_files" / f"{output_file_name}.json", no_image=no_image)
         else:
             raise NotImplementedError(f"Dataset {dataset_name} not implemented")
 

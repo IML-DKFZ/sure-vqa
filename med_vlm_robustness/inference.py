@@ -18,7 +18,7 @@ def main(cfg):
                        ood_value=cfg.ood_value, test_folder_name=cfg.test_folder_name,
                        train_folder_name=cfg.train_folder_name, val_folder_name=cfg.val_folder_name, 
                        dataset_name=cfg.dataset, split=cfg.split, data_shift=cfg.data_shift, 
-                       batch_size=cfg.batch_size, num_workers=cfg.num_workers, mod=cfg.mod)
+                       batch_size=cfg.batch_size, num_workers=cfg.num_workers, mod=cfg.mod, no_image=cfg.no_image)
 
     dm.setup()
 
@@ -42,6 +42,8 @@ def main(cfg):
 
     trainer = Trainer(accelerator="gpu" if torch.cuda.is_available() else "cpu")
     trainer.test(llava, datamodule=dm)
+
+    #os.system(f'touch {cfg["model_path"]}.done')
 
 if __name__ == "__main__":
     config = get_config()

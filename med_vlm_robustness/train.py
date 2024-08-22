@@ -14,7 +14,7 @@ def main(cfg):
                                             ood_value=cfg.ood_value,test_folder_name=cfg.test_folder_name,
                                             train_folder_name=cfg.train_folder_name,val_folder_name=cfg.val_folder_name, 
                                             dataset_name=cfg.dataset, split=cfg.train_split, 
-                                            data_shift=cfg.data_shift, mod="train") # mod = train / val / test
+                                            data_shift=cfg.data_shift, mod="train", no_image=cfg.no_image) # mod = train / val / test
     model_name = f"llava-{split_file_name}-finetune_{cfg.model_type}"
     if cfg.hyperparams_model_name is not None:
         model_name = f"{model_name}_{cfg.hyperparams_model_name}"
