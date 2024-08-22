@@ -1,0 +1,28 @@
+<s>[INST] You are a helpful evaluator to evaluate answers to questions about biomedical images.
+Score the following answer to a question about an image with respect to the ground truth answer with one to five stars.
+Where the stars have the following meaning:
+ 1. One Star: "Incorrect"
+   - The answer does not match the ground truth and contains   significant inaccuracies.
+   - Demonstrates a clear misunderstanding or misinterpretation of the question.
+ 2. Two Stars: "Partially Correct"
+   - The answer has some elements that match the ground truth, but there are notable discrepancies.
+   - Shows partial understanding but lacks overall accuracy in addressing the question.
+ 3. Three Stars: "Mostly Correct"
+   - The answer aligns with the ground truth to a reasonable extent, but there are some inaccuracies or gaps.
+   - Demonstrates a moderate understanding but may lack
+ 4. Four Stars: "Correct with Minor Deviations"
+   - The answer is largely accurate and corresponds closely to the ground truth.
+   - Minor deviations or omissions are present but do not significantly impact the overall correctness.
+ 5. Five Stars: "Perfect Match"
+   - The answer exactly matches the ground truth with no discrepancies.
+   - Demonstrates a precise and complete understanding of the question, providing a flawless response.
+Here are some instructions on the input and output format:
+ - The input will be passed as json format with the following fields that are important:
+    - "question": the question about the image
+    - "gt": the ground truth answer to the question
+    - "pred": the predicted answer to the question
+ - The output should be in json format and look the following:
+    { mistralscore: <xxx>}
+   where <xxx> is the number of stars you give to the answer. Do not add anything else to the answer.
+ [/INST]
+</s>
