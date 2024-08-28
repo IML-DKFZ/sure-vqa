@@ -198,6 +198,10 @@ def get_eval_path(cfg):
         split_value = cfg.ood_value
         split_file_test = f"{cfg.dataset}_{cfg.mod}_{cfg.split}_{split_category}_{split_value}".replace(" ", "")
     split_file_train = split_file_test.replace(cfg.mod, 'train').replace('ood', 'iid')
+    
+    # in case the train split doesnt use sample dataset but inference does
+    if 'sample' not in cfg.train_split:
+        split_file_train = split_file_train.replace('sample_iid', 'iid')
 
     if cfg.train_no_image:
         split_file_train = split_file_train + '_no_image'

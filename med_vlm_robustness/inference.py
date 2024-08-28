@@ -24,6 +24,10 @@ def main(cfg):
 
     split_file_train = split_file_name.replace(cfg.mod, 'train').replace('ood', 'iid')
 
+    # in case the train split doesnt use sample dataset but inference does
+    if 'sample' not in cfg.train_split:
+        split_file_train = split_file_train.replace('sample_iid', 'iid')
+
     if not cfg.train_no_image and cfg.no_image: # When the model is trained with images but inference is without images
         split_file_train = split_file_train.split('_no_image')[0]
     
