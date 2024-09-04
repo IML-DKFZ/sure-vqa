@@ -145,37 +145,48 @@ def get_mimic_df(data_dir, test_folder_name, train_folder_name,
 
     if split == "sample":
         if mod == "train":
-            return df.sample(n=20000, random_state=123)
+            return df.sample(n=min(20000, len(df)), random_state=123)
         else:
-            return df.sample(n=5000, random_state=123)
+            return df.sample(n=min(5000, len(df)), random_state=123)
 
     if split == "sample_iid":
         if split_category == "age" and split_value == "young":
             df = df.loc[df[split_category] >= 60]
+        if split_category == "age" and split_value == "old":
+            df = df.loc[df[split_category] < 40]
         elif split_category == "ethnicity" and split_value == "nonwhite":
             df = df.loc[df[split_category] == "WHITE"]
+        elif split_category == "ethnicity" and split_value == "nonwhite":
+            df = df.loc[df[split_category] == "WHITE"]
+        elif split_category == "ethnicity" and split_value == "white":
+            df = df.loc[df[split_category] != "WHITE"]
+            df = df.loc[df[split_category] != "UNKNOWN/OTHER"]
         else:
             df = df.loc[df[split_category] != split_value]
 
         if mod == "train":
-            return df.sample(n=20000, random_state=123)
+            return df.sample(n=min(20000, len(df)), random_state=123)
         else:
-            return df.sample(n=5000, random_state=123)
+            return df.sample(n=min(5000, len(df)), random_state=123)
     
 
     if split == "sample_ood":
         if split_category == "age" and split_value == "young":
             df = df.loc[df[split_category] < 40]
+        if split_category == "age" and split_value == "old":
+            df = df.loc[df[split_category] >= 60]
         elif split_category == "ethnicity" and split_value == "nonwhite":
             df = df.loc[df[split_category] != "WHITE"]
             df = df.loc[df[split_category] != "UNKNOWN/OTHER"]
+        elif split_category == "ethnicity" and split_value == "white":
+            df = df.loc[df[split_category] == "WHITE"]
         else:
             df = df.loc[df[split_category] == split_value]
 
         if mod == "train":
-            return df.sample(n=20000, random_state=123)
+            return df.sample(n=min(20000, len(df)), random_state=123)
         else:
-            return df.sample(n=5000, random_state=123)
+            return df.sample(n=min(5000, len(df)), random_state=123)
         
     if mod == "train" or mod == "val" or (mod == "test" and split == "iid"):
         if split_category == "age" and split_value == "young":
