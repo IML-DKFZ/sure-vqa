@@ -7,22 +7,30 @@ import pandas as pd
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader
 
-from dataset import SlakeDataset
+from dataset import SlakeDataset, SlakeCorruptionDataset
 from llava.constants import DEFAULT_IMAGE_TOKEN
 
 
 class SlakeDatamodule(pl.LightningDataModule):
-    def __init__(self, data_dir: Path, df, batch_size: int = 32, num_workers: int = 0):
+    def __init__(self, data_dir: Path, df, batch_size: int = 32, num_workers: int = 0, corruption=False, corruption_probabilities: dict = {'blur':0,'brightness': 0,'noise': 0}, corruption_strength: dict = {'blur':'medium','brightness': 'medium','noise': 'medium'}):
         super().__init__()
         self.data_dir = data_dir
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.df = df
+        self.corruption = corruption
+        self.corruption_probabilities = corruption_probabilities
+        self.corruption_strength = corruption_strength
 
     def setup(self, stage: Optional[str] = None):
-        self.train_dataset = SlakeDataset(self.data_dir, self.df)
-        self.val_dataset = SlakeDataset(self.data_dir, self.df)
-        self.test_dataset = SlakeDataset(self.data_dir, self.df)
+        if self.corruption:
+            self.train_dataset = SlakeCorruptionDataset(self.data_dir, self.df, corruption_probabilities=self.corruption_probabilities, corruption_strength=self.corruption_strength)
+            self.val_dataset = SlakeCorruptionDataset(self.data_dir, self.df, corruption_probabilities=self.corruption_probabilities, corruption_strength=self.corruption_strength)
+            self.test_dataset = SlakeCorruptionDataset(self.data_dir, self.df, corruption_probabilities=self.corruption_probabilities, corruption_strength=self.corruption_strength)
+        else:
+            self.train_dataset = SlakeDataset(self.data_dir, self.df)
+            self.val_dataset = SlakeDataset(self.data_dir, self.df)
+            self.test_dataset = SlakeDataset(self.data_dir, self.df)
 
     def train_dataloader(self):
         return DataLoader(
@@ -248,7 +256,9 @@ def get_lidc_df(data_dir,test_folder_name, train_folder_name,
 def get_datamodule(data_dir:Path, ood_value:str,
                    test_folder_name:str,train_folder_name:str,
                    val_folder_name:str,mod:str, dataset_name:str, 
-                   split:str, data_shift:str, batch_size:int, num_workers:int = 0, no_image=False):
+                   split:str, data_shift:str, batch_size:int, num_workers:int = 0, no_image=False, 
+                   corruption=False, corruption_probabilities: dict = {'blur':0,'brightness': 0,'noise': 0}, 
+                   corruption_strength: dict = {'blur':'medium','brightness': 'medium','noise': 'medium'}):
     
     json_file_path, json_file_name = get_json_filename(data_dir=data_dir,
                                   ood_value=ood_value,test_folder_name=test_folder_name, 
@@ -258,16 +268,16 @@ def get_datamodule(data_dir:Path, ood_value:str,
     df = pd.read_json(json_file_path)
     # TODO: probably only one datamodule for all datasets without check for dataset_name
     if dataset_name == "SLAKE":
-        return SlakeDatamodule(data_dir=data_dir, batch_size=batch_size, df=df, num_workers=num_workers), json_file_name
+        return SlakeDatamodule(data_dir=data_dir, batch_size=batch_size, df=df, num_workers=num_workers, corruption=corruption,corruption_probabilities=corruption_probabilities,corruption_strength=corruption_strength), json_file_name
     elif dataset_name == "OVQA":
         # TODO : rename this as datamodule
-        return SlakeDatamodule(data_dir=data_dir, batch_size=batch_size, df=df, num_workers=num_workers), json_file_name
+        return SlakeDatamodule(data_dir=data_dir, batch_size=batch_size, df=df, num_workers=num_workers, corruption=corruption,corruption_probabilities=corruption_probabilities,corruption_strength=corruption_strength), json_file_name
     elif dataset_name == "LIDC":
         # TODO : rename this as datamodule
-        return SlakeDatamodule(data_dir=data_dir, batch_size=batch_size, df=df, num_workers=num_workers), json_file_name
+        return SlakeDatamodule(data_dir=data_dir, batch_size=batch_size, df=df, num_workers=num_workers, corruption=corruption,corruption_probabilities=corruption_probabilities,corruption_strength=corruption_strength), json_file_name
     elif dataset_name == "MIMIC":
         # TODO : rename this as datamodule
-        return SlakeDatamodule(data_dir=data_dir, batch_size=batch_size, df=df, num_workers=num_workers), json_file_name
+        return SlakeDatamodule(data_dir=data_dir, batch_size=batch_size, df=df, num_workers=num_workers, corruption=corruption,corruption_probabilities=corruption_probabilities,corruption_strength=corruption_strength), json_file_name
     else:
         raise NotImplementedError(f"Dataset {dataset_name} not implemented")
 

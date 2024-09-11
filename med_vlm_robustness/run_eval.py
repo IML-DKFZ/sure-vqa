@@ -208,6 +208,9 @@ def get_eval_path(cfg):
     if cfg.no_image:
         split_file_test = split_file_test + '_no_image'
 
+    if cfg.corruption:
+        split_file_test = split_file_test + '_corruption'
+
     model_name = f"llava-{split_file_train}-finetune_{cfg.model_type}"
     if "hyperparams_model_name" in cfg and cfg.hyperparams_model_name is not None:
         model_name = f"{model_name}_{cfg.hyperparams_model_name}"

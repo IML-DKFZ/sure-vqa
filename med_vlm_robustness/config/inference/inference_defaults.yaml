@@ -29,3 +29,16 @@ model_base: ${oc.env:LLAVA_MED_MODEL_PATH}
 max_new_tokens: 100
 num_workers: 24
 batch_size: 1
+
+# Corruption
+corruption: False
+corruption_probabilities: {
+    'blur': 0.5,
+    'brightness': 0.5,
+    'noise': 0.5,
+}
+corruption_strength: {
+    'blur':'low', 
+    'brightness': 'low',
+    'noise': 'low',
+}

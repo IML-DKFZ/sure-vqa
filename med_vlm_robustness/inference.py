@@ -18,7 +18,8 @@ def main(cfg):
                        ood_value=cfg.ood_value, test_folder_name=cfg.test_folder_name,
                        train_folder_name=cfg.train_folder_name, val_folder_name=cfg.val_folder_name, 
                        dataset_name=cfg.dataset, split=cfg.split, data_shift=cfg.data_shift, 
-                       batch_size=cfg.batch_size, num_workers=cfg.num_workers, mod=cfg.mod, no_image=cfg.no_image)
+                       batch_size=cfg.batch_size, num_workers=cfg.num_workers, mod=cfg.mod, no_image=cfg.no_image, 
+                       corruption=cfg.corruption, corruption_probabilities=cfg.corruption_probabilities, corruption_strength = cfg.corruption_strength)
 
     dm.setup()
 
@@ -43,6 +44,10 @@ def main(cfg):
     if "model_path" not in cfg:
         cfg["model_path"] = f"{os.getenv('EXPERIMENT_ROOT_DIR')}/{cfg.dataset}/{cfg.model_type}/{cfg.model_name}"
     print(f"Model path: {cfg.model_path}")
+
+    if cfg.corruption:
+        split_file_name = split_file_name + '_corruption' 
+
     if "output_file" not in cfg:
         if cfg.model_type != "pretrained":
             cfg["output_file"] = f"{cfg.model_path}/eval/{split_file_name}/test_results.json"
