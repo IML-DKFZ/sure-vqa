@@ -8,6 +8,7 @@ from tqdm import tqdm
 import torch
 
 from llava.model.builder import load_pretrained_model
+from llava.model.language_model.llava_mistral import LlavaMistralForCausalLM
 from llava.mm_utils import get_model_name_from_path
 from llava.eval.run_llava import eval_model
 import pytorch_lightning as pl
@@ -33,7 +34,7 @@ class LLaVA_Med(pl.LightningModule):
         super().__init__()
         disable_torch_init()
         self.model_path = cfg.model_path
-        self.model_base = cfg.model_base
+        self.model_base = cfg.model_base if hasattr(cfg, "model_base") else None
         self.model_name = get_model_name_from_path(self.model_path)
         self.max_new_token = cfg.max_new_tokens
 
@@ -62,15 +63,11 @@ class LLaVA_Med(pl.LightningModule):
         images = images.type(torch.float16)
         # TODO: change this to batch inference
         qs = questions[0]
+        # This is already done in dataset creation
         #qs = DEFAULT_IMAGE_TOKEN + "\n" + questions  # -> image and below the text (question)
 
-        # set up the conversation mode depending on the model
-        if "llama-2" in self.model_name.lower():
-            conv_mode = "llava_llama_2"
-        elif "v1" in self.model_name.lower():
-            conv_mode = "llava_v1"
-        # elif "mpt" in self.model_name.lower():
-        #     conv_mode = "mpt"
+        if type(self.model) == LlavaMistralForCausalLM:
+            conv_mode = "mistral_instruct"
         else:
             conv_mode = "llava_v0"
 
@@ -85,56 +82,52 @@ class LLaVA_Med(pl.LightningModule):
             .unsqueeze(0)
             .cuda()
         )
+        image_sizes = [x.size for x in images]
 
         # use functions from converstation class defined in converstation.py
         # set up the stopping string by using variables of the class
-        stop_str = conv.sep if conv.sep_style != SeparatorStyle.TWO else conv.sep2
+        # stop_str = conv.sep if conv.sep_style != SeparatorStyle.TWO else conv.sep2
         # add stopping strings to stop model when it tries to generate aditional conversations after giving the answer
-        keywords = [stop_str, "###", "\n"]
-        stopping_criteria = KeywordsStoppingCriteria(keywords, self.tokenizer, input_ids)
-        if self.model_type != "prompt":
+        # keywords = [stop_str, "###", "\n"]
+        # stopping_criteria = KeywordsStoppingCriteria(keywords, self.tokenizer, input_ids)
+        if self.model_type == "prompt":
             with torch.inference_mode():
                 output_ids = self.model.generate(
                     input_ids,
                     images=images,
+                    image_sizes=image_sizes,
                     use_cache=True,
-                    stopping_criteria=[stopping_criteria],
+                    # stopping_criteria=[stopping_criteria],
                     max_new_tokens=self.max_new_token,
+                    prompt_embeddings=self.prompt_embed["prompt_embeddings"]
+                    # kwargs=generate_kwargs
                 )
         else:
             with torch.inference_mode():
-                (
-                    _,
-                    position_ids,
-                    attention_mask,
-                    past_key_values,
-                    inputs_embeds,
-                    labels
-                ) = self.model.prepare_inputs_labels_for_multimodal(
-                    input_ids,
-                    None,
-                    None,
-                    None,
-                    None,
-                    images
-                )
-                inputs_embeds = torch.cat((self.prompt_embed["prompt_embeddings"].unsqueeze(0).to(inputs_embeds.device), inputs_embeds), dim=1).type(torch.bfloat16)
                 output_ids = self.model.generate(
-                    input_ids=input_ids,
-                    inputs_embeds=inputs_embeds,
+                    input_ids,
+                    images=images,
+                    image_sizes=image_sizes,
                     use_cache=True,
-                    stopping_criteria=[stopping_criteria],
+                    # stopping_criteria=[stopping_criteria],
                     max_new_tokens=self.max_new_token,
+                    # kwargs=generate_kwargs
                 )
 
-        input_token_len = input_ids.shape[1]
+        # input_token_len = input_ids.shape[1]
+        # outputs = self.tokenizer.batch_decode(
+        #     output_ids[:, input_token_len:], skip_special_tokens=True
+        # )[0]
+
         outputs = self.tokenizer.batch_decode(
-            output_ids[:, input_token_len:], skip_special_tokens=True
+            output_ids, skip_special_tokens=True
         )[0]
         outputs = outputs.strip()
-        if outputs.endswith(stop_str):
-            outputs = outputs[: -len(stop_str)]
-        outputs = outputs.strip()
+        print(outputs)
+
+        # if outputs.endswith(stop_str):
+        #     outputs = outputs[: -len(stop_str)]
+        # outputs = outputs.strip()
 
         self.test_results.append({
             "qid": batch["qid"][0].item(),

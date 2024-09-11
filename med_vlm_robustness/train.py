@@ -27,7 +27,7 @@ def main(cfg):
     # TODO: Workaround for now because derived dataclasses cannot be instantiated with base class fields
     for key, value in cfg.training_args.items():
         setattr(training_args, key, value)
-
+    training_args.gradient_checkpointing_kwargs = {"use_reentrant":False}
     train(data_args=data_args, model_args=model_args, training_args=training_args)
 
 
