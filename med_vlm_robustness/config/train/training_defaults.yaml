@@ -43,21 +43,22 @@ training_args:
   lr_scheduler_type: "cosine"
   logging_steps: 1
   tf32: true
-  model_max_length: 1024
+  model_max_length: 2048
   gradient_checkpointing: true
   dataloader_num_workers: 4
   lazy_preprocess: true
   tune_mm_mlp_adapter: True
   train_vision_tower: False # defaults to false
+  log_level: "info"
 
 model_args:
   # model_name_or_path: "liuhaotian/llava-v1.5-7b"
   model_name_or_path: ${oc.env:LLAVA_MED_MODEL_PATH}
   # version: "v1"
-  version: "v0"
-  # vision_tower: "openai/clip-vit-large-patch14-336"
-  vision_tower: "openai/clip-vit-large-patch14"
-  # mm_projector_type: "mlp2x_gelu"   # DANGER ZONE! This changes the architecture compared to the checkpoint...
+  version: "mistral_instruct"
+  vision_tower: "openai/clip-vit-large-patch14-336"
+  #vision_tower: "openai/clip-vit-large-patch14"
+  mm_projector_type: "mlp2x_gelu"   # DANGER ZONE! This changes the architecture compared to the checkpoint...
   mm_vision_select_layer: -2        # What does this even mean?
   mm_use_im_patch_token: False
   # IMPORTANT: If you wanna finetune projector layer set this to True and set mm_use_im_start_end to Flase (otherwise you get not implemented error)
