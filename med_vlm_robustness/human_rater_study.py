@@ -1,4 +1,6 @@
 import json
+import os
+from argparse import ArgumentParser
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Tuple
@@ -34,12 +36,6 @@ metrics_infos = {
     "F1": Metric("open_ended_metrics.json", "f1_score", "F1 Score", 0, 1),
     "Precision": Metric("open_ended_metrics.json", "precision", "Precision", 0, 1),
     "Recall": Metric("open_ended_metrics.json", "recall", "Recall", 0, 1),
-}
-
-datasets = {
-    "SLAKE": Dataset("open", ["kim", "selen"], "all", "all"),
-    "OVQA": Dataset("open", ["kim", "selen"], "all", "all"),
-    "MIMIC": Dataset("open", ["kim", "selen"], "sample", "sample"),
 }
 
 
@@ -123,10 +119,10 @@ def get_human_human_correlation(human_human_metrics_df):
     }
 
 
-def correlation_matrix(dataset_dict: Dict, metrics_dict: Dict, exp_base_dir: Path):
+def correlation_matrix(dataset_dict: Dict, metrics_dict: Dict, exp_base_dir: Path, finetune_method:str, hyperparam_str:str):
     dataset_correlations = {}
     for dataset_name, dataset in dataset_dict.items():
-        score_base_path = exp_base_dir / f"{dataset_name}/ia3/llava-{dataset_name}_train_{dataset.train_split}-finetune_ia3_lr3e-2_seed123/eval/{dataset_name}_val_{dataset.val_split}"
+        score_base_path = exp_base_dir / f"{dataset_name}/{finetune_method}/llava-{dataset_name}_train_{dataset.train_split}-finetune_{finetune_method}_{hyperparam_str}/eval/{dataset_name}_val_{dataset.val_split}"
         kendall_df = pd.DataFrame(columns=list(metrics_dict.keys()), index=list(metrics_dict.keys()))
         kendall_p_df = kendall_df.copy()
         spearman_df = kendall_df.copy()
@@ -263,13 +259,62 @@ def scatter_plots(dataset_correlations:Dict, plt_save_dir:Path, metrics_correlat
                                 plt_save_dir / f"{dataset_name}_{metrics_correlation[0]}_{metrics_correlation[1]}_scatter.png")
 
 
-if __name__=="__main__":
-    save_dir = Path("/nvme/VLMRobustness/refactoring/human_rater_study")
-    dataset_correlations = correlation_matrix(dataset_dict=datasets, metrics_dict=metrics_infos, exp_base_dir=Path(
-        "/home/kckahl/E132-Projekte/Projects/2024_Erkan_Kahl_VLMRobustness/Experiments_Cluster_Sweep"))
+def main_cli():
+    parser = ArgumentParser()
+    parser.add_argument(
+        "--experiment_root_dir",
+        "-e",
+        type=str,
+        help="Path to the root directory of the experiments",
+        default=os.getenv("EXPERIMENT_ROOT_DIR")
+    )
+    parser.add_argument(
+        "--save_path",
+        "-s",
+        type=str,
+        help="Path to the folder where the cropped nodules will be stored",
+        required=True,
+    )
+    parser.add_argument(
+        "--raters",
+        "-r",
+        type=str,
+        help="Raters to include in the analysis. Exactly two raters should be specified.",
+        nargs=2,
+        required=True
+    )
+    parser.add_argument(
+        "--finetune_method",
+        type=str,
+        help="Finetune method with the human ratings",
+        default="ia3"
+    )
+    parser.add_argument(
+        "--hyperparam_str",
+        type=str,
+        help="Hyperparameter string of the finetuning method with the human ratings",
+        default="lr3e-2_seed123"
+    )
+    args = parser.parse_args()
+    return args
+
+def main(args):
+    save_dir = Path(args.save_path)
+    datasets = {
+        "SLAKE": Dataset("open", args.raters, "all", "all"),
+        "OVQA": Dataset("open", args.raters, "all", "all"),
+        "MIMIC": Dataset("open", args.raters, "sample", "sample"),
+    }
+    dataset_correlations = correlation_matrix(dataset_dict=datasets, metrics_dict=metrics_infos,
+                                              exp_base_dir=Path(args.experiment_root_dir),
+                                              finetune_method=args.finetune_method, hyperparam_str=args.hyperparam_str)
     heatmap_plots(dataset_correlations, plt_save_dir=save_dir)
     heatmap_plots_small(dataset_correlations, plt_save_dir=save_dir)
     scatter_plots(dataset_correlations, plt_save_dir=save_dir,
                   metrics_correlations=[("Human", "Mistral"), ("Human", "Human"), ("Human", "BLEU"),
                                         ("Human", "Exact Match"), ("Human", "F1"), ("Human", "Precision"),
                                         ("Human", "Recall")])
+
+if __name__ == "__main__":
+    cli_args = main_cli()
+    main(args=cli_args)
