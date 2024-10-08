@@ -7,6 +7,79 @@ import pandas as pd
 
 from med_vlm_robustness.utils import get_config
 
+
+def calc_robustness_pretrained(cfg):
+    base_dir = cfg.base_dir
+    dataset = cfg.dataset
+    model_type = cfg.model_type
+    mod = cfg.mod
+
+    result_dict_iid = {
+        "accuracy": None,
+        "mistral": None,
+    }
+    result_dict_ood = {
+        "accuracy": None,
+        "mistral": None,
+    }
+    result_dict_rr = {
+        "accuracy": None,
+        "mistral": None,
+    }
+
+    result_dirs = []
+    for test_split in ["iid", "ood"]:
+        if not cfg.get("no_image", False):
+            result_dirs.append(
+                f"{base_dir}/{dataset}/{model_type}/eval/{dataset}_{mod}_{test_split}_{cfg.data_shift}_{cfg.ood_value.replace(' ', '')}")
+        else:
+            result_dirs.append(
+                f"{base_dir}/{dataset}/{model_type}/eval/{dataset}_{mod}_{test_split}_{cfg.data_shift}_{cfg.ood_value.replace(' ', '')}_no_image")
+    result_dir_iid = result_dirs[0]
+    result_dir_ood = result_dirs[1]
+    closed_ended_metrics_file_iid = f"{result_dir_iid}/mistral_metrics_closed.json"
+    closed_ended_metrics_file_ood = f"{result_dir_ood}/mistral_metrics_closed.json"
+    with open(closed_ended_metrics_file_iid, "r") as f:
+        closed_ended_metrics_iid = json.load(f)
+    closed_ended_score_iid = closed_ended_metrics_iid[0]["avg_mistral_score"]
+    with open(closed_ended_metrics_file_ood, "r") as f:
+        closed_ended_metrics_ood = json.load(f)
+    closed_ended_score_ood = closed_ended_metrics_ood[0]["avg_mistral_score"]
+    mistral_metrics_iid = f"{result_dir_iid}/mistral_metrics.json"
+    with open(mistral_metrics_iid, "r") as f:
+        mistral_metrics_iid = json.load(f)
+    mistral_score_iid = mistral_metrics_iid[0]["avg_mistral_score"]
+    mistral_metrics_ood = f"{result_dir_ood}/mistral_metrics.json"
+    with open(mistral_metrics_ood, "r") as f:
+        mistral_metrics_ood = json.load(f)
+    mistral_score_ood = mistral_metrics_ood[0]["avg_mistral_score"]
+
+    rr_closed = 1 - ((closed_ended_score_iid - closed_ended_score_ood) / closed_ended_score_iid)
+    rr_mistral = 1 - ((mistral_score_iid - mistral_score_ood) / mistral_score_iid)
+
+    result_dict_iid["accuracy"] = round(closed_ended_score_iid, 2)
+    result_dict_iid["mistral"] = round(mistral_score_iid, 2)
+    result_dict_ood["accuracy"] = round(closed_ended_score_ood, 2)
+    result_dict_ood["mistral"] = round(mistral_score_ood, 2)
+    result_dict_rr["accuracy"] = round(rr_closed, 2)
+    result_dict_rr["mistral"] = round(rr_mistral, 2)
+
+    print(result_dict_iid)
+    print(result_dict_ood)
+    print(result_dict_rr)
+
+    result_dict = {
+        "iid": result_dict_iid,
+        "ood": result_dict_ood,
+        "rr": result_dict_rr,
+    }
+    result_df = pd.DataFrame(result_dict).transpose()
+    print(result_df)
+    results_file = f"{base_dir}/{dataset}/{model_type}/{cfg.output_file_name}"
+    print(results_file)
+    result_df.to_csv(results_file)
+
+
 def calc_robustness(cfg):
     base_dir = cfg.base_dir
     dataset = cfg.dataset
@@ -45,7 +118,11 @@ def calc_robustness(cfg):
 
             result_dirs = []
             for test_split in ["iid", "ood"]:
-                result_dirs.append(f"{base_dir}/{dataset}/{model_type}/llava-{dataset}_train_{train_split}_{cfg.data_shift}_{cfg.ood_value.replace(' ', '')}-finetune_{model_type}_{hparams_model_name}/eval/{dataset}_{mod}_{test_split}_{cfg.data_shift}_{cfg.ood_value.replace(' ', '')}")
+                if not cfg.get("no_image", False):
+                    result_dirs.append(f"{base_dir}/{dataset}/{model_type}/llava-{dataset}_train_{train_split}_{cfg.data_shift}_{cfg.ood_value.replace(' ', '')}-finetune_{model_type}_{hparams_model_name}/eval/{dataset}_{mod}_{test_split}_{cfg.data_shift}_{cfg.ood_value.replace(' ', '')}")
+                else:
+                    result_dirs.append(
+                        f"{base_dir}/{dataset}/{model_type}/llava-{dataset}_train_{train_split}_{cfg.data_shift}_{cfg.ood_value.replace(' ', '')}_no_image-finetune_{model_type}_{hparams_model_name}/eval/{dataset}_{mod}_{test_split}_{cfg.data_shift}_{cfg.ood_value.replace(' ', '')}_no_image")
             result_dir_iid = result_dirs[0]
             result_dir_ood = result_dirs[1]
             closed_ended_metrics_file_iid = f"{result_dir_iid}/mistral_metrics_closed.json"
@@ -104,4 +181,7 @@ def calc_robustness(cfg):
 
 if __name__=="__main__":
     config = get_config()
-    calc_robustness(cfg=config)
+    if config.model_type == "pretrained":
+        calc_robustness_pretrained(cfg=config)
+    else:
+        calc_robustness(cfg=config)
