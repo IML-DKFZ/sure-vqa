@@ -27,7 +27,7 @@ class Dataset:
 
 
 metrics_infos = {
-    "Human": Metric("human_metrics_{}_balanced_{}.json", "human_score", "Human Score", 1, 5),
+    "Human": Metric("human_metrics_{}_{}.json", "human_score", "Human Score", 1, 5),
     "Mistral": Metric("mistral_metrics.json", "mistral_score", "Mistral Score", 1, 5),
     "BLEU": Metric("open_ended_metrics.json", "bleu_score", "BLEU Score", 0, 1),
     "Exact Match": Metric("open_ended_metrics.json", "exact_match_score", "Exact Match Score", 0, 1),
@@ -46,11 +46,7 @@ datasets = {
 def get_human_automated_metrics_df(dataset:Dataset, metrics_dict:Dict, score_base_path:Path):
     all_human_scores = None
     for rater in dataset.raters:
-        if dataset.open_closed == "open":
-            human_score_files = [score_base_path / f"human_metrics_{dataset.open_closed}_balanced_{rater}.json",
-                                 score_base_path / f"human_metrics_{dataset.open_closed}_{rater}.json"]
-        else:
-            human_score_files = [score_base_path / f"human_metrics_{dataset.open_closed}_{rater}.json"]
+        human_score_files = [score_base_path / f"human_metrics_{dataset.open_closed}_{rater}.json"]
         human_scores = []
         for human_score_file in human_score_files:
             try:
@@ -83,14 +79,8 @@ def get_human_automated_metrics_df(dataset:Dataset, metrics_dict:Dict, score_bas
 
 
 def get_human_human_metrics_df(dataset:Dataset, score_base_path:Path):
-    if dataset.open_closed == "open":
-        human_score_files_1 = [score_base_path / f"human_metrics_{dataset.open_closed}_balanced_{dataset.raters[0]}.json",
-                               score_base_path / f"human_metrics_{dataset.open_closed}_{dataset.raters[0]}.json"]
-        human_score_files_2 = [score_base_path / f"human_metrics_{dataset.open_closed}_balanced_{dataset.raters[1]}.json",
-                               score_base_path / f"human_metrics_{dataset.open_closed}_{dataset.raters[1]}.json"]
-    else:
-        human_score_files_1 = [score_base_path / f"human_metrics_{dataset.open_closed}_{dataset.raters[0]}.json"]
-        human_score_files_2 = [score_base_path / f"human_metrics_{dataset.open_closed}_{dataset.raters[1]}.json"]
+    human_score_files_1 = [score_base_path / f"human_metrics_{dataset.open_closed}_{dataset.raters[0]}.json"]
+    human_score_files_2 = [score_base_path / f"human_metrics_{dataset.open_closed}_{dataset.raters[1]}.json"]
     human_scores_1 = []
     human_scores_2 = []
     for human_score_file in human_score_files_1:
@@ -186,12 +176,17 @@ def format_p_value(val):
         return f"{val:.2f}"
 
 
-def single_correlation_heatmap(correlation_df, correlation_p_df, title:str, save_path:Path):
+def single_correlation_heatmap(correlation_df, correlation_p_df, title:str, save_path:Path, min_value=None, max_value=None, plot_p_values=True):
     correlation_df = correlation_df.apply(pd.to_numeric)
     correlation_p_df = correlation_p_df.apply(pd.to_numeric)
 
-    correlation_df_formatted = correlation_df.round(2).astype(str) + "\n (" + correlation_p_df.map(format_p_value).astype(str) + ")"
-    sns.heatmap(correlation_df, annot=correlation_df_formatted, fmt="", annot_kws={"fontsize": "xx-small"})
+    if plot_p_values:
+        correlation_df_formatted = correlation_df.round(2).astype(str) + "\n (" + correlation_p_df.map(format_p_value).astype(str) + ")"
+        fontsize = "xx-small"
+    else:
+        correlation_df_formatted = correlation_df.round(2).astype(str)
+        fontsize = "large"
+    sns.heatmap(correlation_df, annot=correlation_df_formatted, fmt="", annot_kws={"fontsize": fontsize}, square=True, vmin=min_value, vmax=max_value, cbar_kws={"orientation": "horizontal"})
     plt.title(title)
     plt.xticks(rotation=20)
     plt.yticks(rotation=45)
@@ -201,10 +196,23 @@ def single_correlation_heatmap(correlation_df, correlation_p_df, title:str, save
 
 def heatmap_plots(dataset_correlations:Dict, plt_save_dir:Path):
     for dataset_name, dataset_correlation in dataset_correlations.items():
-        single_correlation_heatmap(dataset_correlation["kendall_df"], dataset_correlation["kendall_p_df"],
-                                    f"{dataset_name} Kendall Correlation", plt_save_dir / f"{dataset_name}_kendall_correlation.png")
-        single_correlation_heatmap(dataset_correlation["spearman_df"], dataset_correlation["spearman_p_df"],
-                                    f"{dataset_name} Spearman Correlation", plt_save_dir / f"{dataset_name}_spearman_correlation.png")
+        min_value = min(dataset_correlation["kendall_df"].min().min(), dataset_correlation["spearman_df"].min().min())
+        single_correlation_heatmap(dataset_correlation["kendall_df"].iloc[:2, :], dataset_correlation["kendall_p_df"].iloc[:2, :],
+                                    f"Kendall Correlation", plt_save_dir / f"{dataset_name}_kendall_correlation.png", min_value)
+        single_correlation_heatmap(dataset_correlation["spearman_df"].iloc[:2, :], dataset_correlation["spearman_p_df"].iloc[:2, :],
+                                    f"Spearman Correlation", plt_save_dir / f"{dataset_name}_spearman_correlation.png", min_value)
+
+
+def heatmap_plots_small(dataset_correlations:Dict, plt_save_dir:Path):
+    kendall_human_dfs = [dataset_correlation["kendall_df"].loc["Human", :] for dataset_correlation in dataset_correlations.values()]
+    kendall_human_dfs = pd.concat(kendall_human_dfs)
+    kendall_human_dfs_min = kendall_human_dfs.min()
+    kendall_human_dfs_max = kendall_human_dfs.max()
+    for dataset_name, dataset_correlation in dataset_correlations.items():
+        single_correlation_heatmap(dataset_correlation["kendall_df"].iloc[:1, :], dataset_correlation["kendall_p_df"].iloc[:1, :],
+                                    f"Kendall Correlation",
+                                   plt_save_dir / f"{dataset_name}_kendall_correlation_small.png",
+                                   kendall_human_dfs_min, kendall_human_dfs_max, plot_p_values=False)
 
 
 def single_scatter_plot(correlation_df, metric_name_1, metric_name_2, title:str, save_path:Path):
@@ -256,8 +264,12 @@ def scatter_plots(dataset_correlations:Dict, plt_save_dir:Path, metrics_correlat
 
 
 if __name__=="__main__":
+    save_dir = Path("/nvme/VLMRobustness/refactoring/human_rater_study")
     dataset_correlations = correlation_matrix(dataset_dict=datasets, metrics_dict=metrics_infos, exp_base_dir=Path(
         "/home/kckahl/E132-Projekte/Projects/2024_Erkan_Kahl_VLMRobustness/Experiments_Cluster_Sweep"))
-    heatmap_plots(dataset_correlations, plt_save_dir=Path("/nvme/VLMRobustness/human_rater_study"))
-    scatter_plots(dataset_correlations, plt_save_dir=Path("/nvme/VLMRobustness/human_rater_study"),
-                  metrics_correlations=[("Human", "Mistral"), ("Human", "Human")])
+    heatmap_plots(dataset_correlations, plt_save_dir=save_dir)
+    heatmap_plots_small(dataset_correlations, plt_save_dir=save_dir)
+    scatter_plots(dataset_correlations, plt_save_dir=save_dir,
+                  metrics_correlations=[("Human", "Mistral"), ("Human", "Human"), ("Human", "BLEU"),
+                                        ("Human", "Exact Match"), ("Human", "F1"), ("Human", "Precision"),
+                                        ("Human", "Recall")])
