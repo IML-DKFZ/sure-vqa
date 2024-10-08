@@ -10,6 +10,8 @@ split: "iid"
 mod: "test"
 model_type: "pretrained"
 seed: 123
+no_image: False
+train_no_image: False
 
 # split_file: "${dataset}_test_${split}_${data_shift}_${ood_value}"
 # split_file: "SLAKE_test_iid_modality_X-Ray"
@@ -25,3 +27,16 @@ model_base: null
 max_new_tokens: 100
 num_workers: 24
 batch_size: 1
+
+# Corruption
+corruption: False
+corruption_probabilities: {
+    'blur': 0.5,
+    'brightness': 0.5,
+    'noise': 0.5,
+}
+corruption_strength: {
+    'blur':'low', 
+    'brightness': 'low',
+    'noise': 'low',
+}

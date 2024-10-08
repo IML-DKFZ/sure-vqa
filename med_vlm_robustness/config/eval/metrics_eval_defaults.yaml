@@ -12,6 +12,11 @@ hyperparams_model_name: seed${seed}
 no_image: False
 train_no_image: False
 corruption: False
+corruption_strength: {
+    'blur':'low', 
+    'brightness': 'low',
+    'noise': 'low',
+}
 
 model_train_file: ${data_root_dir}/${dataset}/train.json
 model_val_file: ${data_root_dir}/${dataset}/validate.json

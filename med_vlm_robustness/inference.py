@@ -47,6 +47,11 @@ def main(cfg):
 
     if cfg.corruption:
         split_file_name = split_file_name + '_corruption' 
+        strength = cfg.corruption_strength['blur']
+        split_file_name = split_file_name + '_' + str(strength) 
+
+    # print('CORRUPTION: ', cfg.corruption)
+    # print(str(cfg.corruption_strength))
 
     if "output_file" not in cfg:
         if cfg.model_type != "pretrained":
