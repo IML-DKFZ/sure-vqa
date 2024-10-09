@@ -3,10 +3,10 @@ data_root_dir: ${oc.env:DATASET_ROOT_DIR}
 seed: 123
 output_dir: null
 dataset: SLAKE
-balanced: True
+balanced: False
 answer_type: OPEN
 train_set: all
 val_set: all
-num_questions: 40
+num_questions: 50
 finetune_method: ia3
 hyperparam_str: lr3e-2_seed123
