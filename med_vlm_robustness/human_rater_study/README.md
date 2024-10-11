@@ -42,8 +42,8 @@ Once you are done, click "Save ratings to file". This will create a file called 
  In the end, three different kinds of plots are generated: 
 
  1. Heatmap plots showing the Human - Metrics and Mistral - Metrics correlations including the p values  
- <img src="../images_doc/OVQA_kendall_correlation.png" alt="Kendall Correlation" width="50%"> 
+ <img src="../images_doc/OVQA_kendall_correlation.png" alt="Kendall Correlation" width="100%"> 
  2. Heatmaps only showing the Human - Metrics correlations (a condensed version of 1.)  
-  <img src="../images_doc/OVQA_kendall_correlation_small.png" alt="Kendall Correlation Small" width="50%"> 
+  <img src="../images_doc/OVQA_kendall_correlation_small.png" alt="Kendall Correlation Small" width="100%"> 
  3. Scatter plots showing the ratings of the metrics pairs (the example shows a Human - Mistral correlation)  
-  <img src="../images_doc/OVQA_Human_Mistral_scatter.png" alt="Human Mistral Scatter" width="50%"> 
+  <img src="../images_doc/OVQA_Human_Mistral_scatter.png" alt="Human Mistral Scatter" width="100%"> 
