@@ -272,7 +272,7 @@ def main_cli():
         "--save_path",
         "-s",
         type=str,
-        help="Path to the folder where the cropped nodules will be stored",
+        help="Path to the folder where the plots will be saved",
         required=True,
     )
     parser.add_argument(
