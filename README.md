@@ -124,6 +124,3 @@ eval
     ├── test_results.json
 ```
 The file `mistral_metrics.json` contains Mistral evaluation results for open-ended questions, while `mistral_metrics_closed.json` holds the results for close-ended questions. The folder name, `type_of_inference_you_run`, is defined during inference. It’s essential to correctly set the parameters in the evaluation configuration to ensure that evaluation is performed on the correct inference run.
-
-## Setting up OVQA Dataset
-- change the train, val and test set names as test.json train.json validate.json
