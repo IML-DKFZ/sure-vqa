@@ -18,19 +18,26 @@ such baselines like e.g. considering the text of the question only (R3).
 
 ## Table of Contents
 
+- [Notes](#notes)
 - [Setup](#setup)
 - [Fine-tuning](#finetune)
 - [Inference](#inference)
 - [Evaluation](#evaluation)
+
+<a name="notes"></a>
+## Notes
+- Please note that the `data` folder within the `med_vlm_robustness` directory contains all the necessary code and instructions for setting up the datasets (SLAKE, OVQA, and MIMIC). This README assumes that you have successfully downloaded and set up these datasets.
+
+- For detailed instructions and information about the human rater study, please refer to the README located in `med_vlm_robustness/human_rater_study`. 
 
 <a name="setup"></a>
 ## Setup
 The code is tested with python version 3.10.
 1) Clone this repository
 2) Install the requirements 
-```
-pip install -r requirements.txt
-```
+    ```
+    pip install -r requirements.txt
+    ```
 3) Clone the LlaVA-Med v1.5 repository [here](https://github.com/microsoft/LLaVA-Med)
 4) Download LlaVA-Med v1.5 weights [here](https://huggingface.co/microsoft/llava-med-v1.5-mistral-7b)
 5) Add the relevant paths to your `.env` file. An example of this file is provided under `med_vlm_robustness/example.env`. You need to mainly add the paths of your; 
