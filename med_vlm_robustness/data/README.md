@@ -1,5 +1,29 @@
 # Preprocessing the Data
 
+## SLAKE
+To download the SLAKE dataset, go to [this](https://www.med-vqa.com/slake/) website and choose your preferred download option. In the end, the structure of the downloaded dataset should be 
+
+```
+SLAKE
+└── imgs
+└── KG
+└── mask.txt
+└── train.json
+└── validate.json
+└── test.json
+```
+
+## OVQA
+The OVQA dataset can be downloaded [here](http://47.94.174.82/). Note that you have to conduct a CITI data privacy course and be credentialed in order to access the dataset. After downloading the dataset, you should bring it into the following structure: 
+
+```
+OVQA
+└── img
+└── train.json
+└── validate.json
+└── test.json
+```
+
 ## MIMIC-CXR-VQA
 
 In order to access the MIMIC-CXR-VQA dataset, you have to be a credentialed used on [Physionet](https://physionet.org).  
@@ -42,4 +66,10 @@ Also, make sure to run
 ```
 bash download_images.sh
 ```
-from [here](https://github.com/baeseongsu/mimic-cxr-vqa?tab=readme-ov-file#downloading-mimic-cxr-jpg-images) to download the images from the MIMIC-CXR dataset that are relevant for the asked questions.
+from [here](https://github.com/baeseongsu/mimic-cxr-vqa?tab=readme-ov-file#downloading-mimic-cxr-jpg-images) to download the images from the MIMIC-CXR dataset that are relevant for the asked questions.  
+
+After downloaded everything and set it up in the structure as described above, run
+```
+python mimic_cxr_vqa_data.py -p <path/to/MIMIC>
+```
+This will create a ``train.json``, ``validate.json``, and ``test.json``with the corresponding questions in the MIMIC folder.
