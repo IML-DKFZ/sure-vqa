@@ -19,7 +19,7 @@ such baselines like e.g. considering the text of the question only (R3).
 ## Table of Contents
 
 - [Setup](#setup)
-- [Finetuning](#finetune)
+- [Fine-tuning](#finetune)
 - [Inference](#inference)
 - [Evaluation](#evaluation)
 - [Acknowledgement](#acknowledgement)
@@ -41,14 +41,23 @@ pip install -r requirements.txt
 
 <a name="finetune"></a>
 ## Fine-tuning
-To run fine-tuning you need to execute the `train.py` python file in the repository. The configurations for fine-tuning can be found in the file `config/train/training_defaults.yaml`. This `.yaml` file already contains example configurations for you, however, you can change these settings easily for your own use case.
+To run fine-tuning, execute the `train.py` python file located in the repository. The configurations for fine-tuning are available in the file `config/train/training_defaults.yaml`, which provides example settings that you can easily adjust to suit your specific needs.
 
-To run fine-tuning without using any images but only the question-answer pairs set the parameter `no_image` to `True`. Note that when you set this parameter to `True`, your fine-tuned model will have `no-image` tag in its name and if you want to run inference and evaluation on this model, you need to set `train_no_image` parameter in inference and evaluation config files to also `True`.
-
-After fine-tuning, the results are stored in a folder named using the hyperparameters you specified. This folder name is your fine-tuned model name and it will have the following structure:
+An important parameter in the configuration is `model_type` which allows you to define which fine-tuning strategy you want to use. Available options for this field are as follows; ['lora', 'ia3', 'prompt'].  Once you select your fine-tuning method here, you must also properly set the parameters `lora_enable`, `prompt_enable` and `ia3_enable`. You should only set the parameter corresponding to your chosen fine-tuning method to `True` and the rest to `False`. For example, if you want to run fine-tuning using LoRA, then your parameter configuration should look like this:
 
 ```
-llava-SLAKE_train_iid_content_type_Size-finetune_lora_rank128_lr3e-5_seed123
+model_type: "lora" 
+ia3_enable: false
+prompt_enable: false
+lora_enable: true
+```
+
+**Fine-tuning without images (No image Baseline):** To run fine-tuning without using any images but only the question-answer pairs, set the parameter `no_image` to `True` in the configuration file. Note that when you set this parameter to `True`, the folder keeping your fine-tuned model will have `no-image` keyword in its name and if you want to run inference and evaluation on this model, you need to set `train_no_image` parameter in inference and evaluation configuration files to `True`.
+
+After fine-tuning, the results are saved in a folder named according to the configurations specified in the `.yaml` file, reflecting your chosen settings. The folder will be created under your experiment root directory defined in yoour `.env` file and it will have the following structure:
+
+```
+llava-SLAKE_train_iid_content_type_Size-finetune_lora_rank128_lr3e-5_seed123 (your folder name)
 ├── init_weight
     ├── adapter_config.json
     ├── adapter_model.bin
@@ -65,11 +74,11 @@ llava-SLAKE_train_iid_content_type_Size-finetune_lora_rank128_lr3e-5_seed123
 
 <a name="inference"></a>
 ## Inference
-To run inference you need to execute the `inference.py` python file in the repository. The configurations for inference can be found in the file `config/inference/inference_defaults.yaml`. This `.yaml` file is used for running inference after you fine-tune a model. If you want to run the inference on the pretrained (no fine-tune) model you ca nuse `config/inference/inference_pretrained_defaults.yaml` file. Both files already contain example configurations for you as in the fine-tuning case. Note that you can change these settings easily for your own use case. 
+To run inference, execute the `inference.py` python file located in the repository. The configurations for inference can be found in the file `config/inference/inference_defaults.yaml`. This file is used for running inference after you fine-tune a model. So, to use this configuration you must already have a folder containing your fine-tuned model in your root experiment directory. If you want to run the inference on the pretrained (not fine-tuned) model you can use the following file; `config/inference/inference_pretrained_defaults.yaml`. For this configuration you do not need to have a folder containing your model, this configuration will automatically use the path of your pretrained model weights which you should define in your `.env` file.  Note that both configurations contain example settings for you and you can change these settings easily for your own use case. 
 
-To run the inference for `no-image` baseline where the images are not utilized during inference and the model only uses question and answer pairs, set the parameter `no-image` to `True`. If you are running this baseline on a model which is also finetuned without images set the `train_no_image` parameter to also `True`. 
+**Inference without images (No image Baseline):** To run inference using only question-answer pairs and without any images, set the `no_image` parameter to `True`. If you are performing inference on a model that was fine-tuned without images (as described in the fine-tuning section), you should also set the `train_no_image` parameter to `True`. These parameters provide greater flexibility during fine-tuning and inference, allowing you to fine-tune a model without images and later run inference with images, or vice versa.
 
-To run the inference with corrupted images where the dataloader corrupts the images during inference with the given probability and strength level, set the parameter `corruption` to `True` and specify the strength and probability of each corruption in the related parameters as follows;
+**Inference with corrupted images:** To run the inference with corrupted images where the dataloader applies corruption based on specified probability and strength levels, set the parameter `corruption` to `True` and specify the strength and probability of each corruption in the `.yaml` file as follows;
 ```
 corruption_probabilities: {
     'blur': 0.5,
@@ -82,17 +91,30 @@ corruption_strength: {
     'noise': 'low',
 }
 ```
-After inference, the results are stored in a subfolder called `eval` under your fine-tuned model folder, which has the following structure:
+Note that probabilities can range from 0 to 1 (inclusive), and strength levels can be set to one of the following options: ['low', 'medium', 'high']. Currently, the codebase only supports applying the same corruption level across all types of corruptions. After inference, the results are stored in a subfolder named `eval`, which is created within your fine-tuned or pretrained model's folder. The structure of the `eval` folder will be as follows:
 
 ```
 eval
 ├── <type_of_inference_you_run>
     ├── test_results.json
 ```
+The `type_of_inference_you_run` folder will be generated based on the configurations specified in the `.yaml` file. For example, if you are running inference without images, the folder name will include the keyword `no_image`. Similarly, if you are running inference with corrupted images, the folder name will contain the keyword `corruption` along with the specified corruption level. 
 
 <a name="evaluation"></a>
 ## Evaluation
-After evaluation, the results are stored in the eval subfolder, which will have the following updated structure:
+To run the evaluation, execute the `run_eval.py` script found in the repository. Evaluation configurations are located in the `config/eval/metrics_eval_defaults.yaml` file. This configuration file includes example settings that you can easily adjust to fit your specific requirements. Keep in mind that evaluation will not proceed unless a `test_results.json` file has been generated by the inference pipeline. 
+
+A key parameter in the configuration file is `metric_type`, which specifies the metrics to be calculated during evaluation. Available options include `["traditional_metrics", "mistral", "mistral_closed"]`. You can select one or multiple metrics by listing them accordingly. 
+
+- The `traditional_metrics` option includes metrics such as BLEU score, accuracy, and F1-score.
+- The `mistral` option evaluates open-ended questions using Mistral, an LLM-based metric.
+- The `mistral_closed` option does the same for close-ended questions.
+
+**Evaluate Inference without Images:** If your inference was performed without using images and you wish to obtain performance metrics for this run, set the `no_image` parameter to `True`. Additionally, if your model was fine-tuned without images (regardless of the inference run), ensure that the `train_no_image` parameter is also set to `True`.
+
+**Evaluate Inference with Corrupted Images:** If your inference involved corrupted images and you want to evaluate its performance, set the `corruption` parameter to `True` and specify the probabilities and strength levels that were used during inference.
+
+After evaluation, the results are stored in the same `eval` folder as used for inference. This folder will now have the following updated structure:
 ```
 eval
 ├── <type_of_inference_you_run>
@@ -102,26 +124,10 @@ eval
     ├── open_ended_metrics.json
     ├── test_results.json
 ```
+The file `mistral_metrics.json` contains Mistral evaluation results for open-ended questions, while `mistral_metrics_closed.json` holds the results for close-ended questions. The folder name, `type_of_inference_you_run`, is defined during inference. It’s essential to correctly set the parameters in the evaluation configuration to ensure that evaluation is performed on the correct inference run.
 
 <a name="acknowledgement"></a>
 ## Acknowledgement
-<!-- To enable the gpt4 evaluation functionality in this repo you need to have an API key from Openai.
-
-To get an API key please go to the following webpage: https://platform.openai.com/docs/overview
-
-After getting a key, you need to add this key to the .env file in your repository. The file, *template.env*, is created for you as a guide which shows how your .env file should look like. You can copy the context of this file to your .env file or basically change the file name to .env by removing the template part. Note that the repository will not run properly if you don't set all the parameters spesified in this file.
-
-You can add your API key to the following variable in the .env file:
-
-```shell
-export OPEN_AI_API_KEY= your_api_key
-```
-
-Once you have set your key you need to run the following before starting the program.
-
-```shell
-source .env 
-``` -->
 
 ## Setting up OVQA Dataset
 - change the train, val and test set names as test.json train.json validate.json

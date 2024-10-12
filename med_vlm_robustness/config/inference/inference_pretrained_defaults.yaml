@@ -3,40 +3,44 @@ dataset: "SLAKE"
 test_folder_name: "test.json"
 val_folder_name: "validate.json"
 train_folder_name: "train.json"
+# Define which key in the .json file of the dataset should be used for filtering iid and ood data
 data_shift: "modality"
+# Define the ood value
+# The samples having this value in the key defined in "data_shift" will be used as ood samples and the rest will be used as iid samples
 ood_value: "X-Ray"
+# Define which data split you used in fine-tuning. Since this configuration is not used after fine-tuning, this parameter will not have any effect. Do not change this.
 train_split: "iid"
+# Define which data split you want to use during inference.  Available options: ['iid', 'ood', 'all', 'sample']
+# Sample will randomly sample 5000 data pints from your dataset. This is intended to be used for MIMIC dataset where the data is too large
 split: "iid"
+# Define if you want to use test data or the validation data during inference. Available options: ['test', 'val']
 mod: "test"
+# Do not change this parameter. This parameter means that you will run inference on the pretrained model (no fine-tune)
 model_type: "pretrained"
 seed: 123
-no_image: False
-train_no_image: False
-
-# split_file: "${dataset}_test_${split}_${data_shift}_${ood_value}"
-# split_file: "SLAKE_test_iid_modality_X-Ray"
-# split_file_train: "${dataset}_train_${train_split}_${data_shift}_${ood_value}"
-# split_file_train:  "SLAKE_train_iid_modality_X-Ray"
 data_dir: ${data_root_dir}/${dataset}
-# model_path: path_to_pretrained_model
+# Path_to_pretrained_model. Do not change this.
 model_path: ${oc.env:LLAVA_MED_MODEL_PATH}
-
-# set the base model with the llava_med pretrained weights
+# set the base model to null since you do not use a finetuned model. Do not change this.
 model_base: null
-#output_file: ${oc.env:EXPERIMENT_ROOT_DIR}/${dataset}/${model_type}/eval/${split_file}/test_results.json
 max_new_tokens: 100
 num_workers: 24
 batch_size: 1
 
-# Corruption
+# Set this to True if you want to run fine-tuning without using images (no image baseline)
+no_image: False
+# Set this to True if you have set "no_image: True" during fine-tuning
+train_no_image: False
+# Set this to True if you want to run inference on corrupted images
 corruption: False
+# Define the probabilty and strength of each corruption method
 corruption_probabilities: {
-    'blur': 0.5,
-    'brightness': 0.5,
-    'noise': 0.5,
+    'blur': 0.5, # Max: 1, Min: 0
+    'brightness': 0.5, # Max: 1, Min: 0
+    'noise': 0.5, # Max: 1, Min: 0
 }
 corruption_strength: {
-    'blur':'low', 
-    'brightness': 'low',
-    'noise': 'low',
+    'blur':'low', # Available options: ['low', 'medium', 'high']
+    'brightness': 'low', # Available options: ['low', 'medium', 'high']
+    'noise': 'low', # Available options: ['low', 'medium', 'high']
 }

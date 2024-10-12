@@ -3,24 +3,29 @@ dataset: "SLAKE"
 test_folder_name: "test.json"
 val_folder_name: "validate.json"
 train_folder_name: "train.json"
+# Define which key in the .json file of the dataset should be used for filtering iid and ood data
 data_shift: "modality"
+# Define the ood value
+# The samples having this value in the key defined in "data_shift" will be used as ood samples and the rest will be used as iid samples
 ood_value: "X-Ray"
+# Define which data split you want to use during training. Available options: ['iid', 'ood', 'all', 'sample']
+# Sample will randomly sample 20000 data pints from your dataset. This is intended to be used for MIMIC dataset where the data is too large
 train_split: "iid"
-# lora, prompt,...
-model_type: "lora" # ai3, prompt
-# split_file: "${dataset}_train_${train_split}_${data_shift}_${ood_value}"
-# split_file: "SLAKE_train_iid_modality_X-Ray"
+# Define which finetuning method you want to use. Available options: ['lora', 'ia3', 'prompt']
+model_type: "lora" 
 data_dir: ${data_root_dir}/${dataset}
 hyperparams_model_name: seed${training_args.seed}
+# Set this to true if you want to run fine-tuning without using images (no image baseline)
 no_image: False
-# output_dir: ${oc.env:EXPERIMENT_ROOT_DIR}/${dataset}/${model_type}/llava-${split_file}-finetune_${model_type}
 
 training_args:
   seed: 123
   ia3_enable: false
   prompt_enable: false
+  # Define number of tokens you want to use during prompt tuning
   prompt_num_tokens: 80
   lora_enable: true
+  # Define your lora hyperparameters
   lora_r: 128
   lora_alpha: 256
   lora_dropout: 0.05
@@ -28,14 +33,13 @@ training_args:
   mm_projector_lr: 2e-5
   group_by_modality_length: true
   bf16: true
-  # output dir
   num_train_epochs: 1
   per_device_train_batch_size: 32
   per_device_eval_batch_size: 1
   gradient_accumulation_steps: 1
   evaluation_strategy: "no"
   save_strategy: "steps"
-  save_steps: 100000 # was 500 before
+  save_steps: 1000
   save_total_limit: 1
   learning_rate: 2e-5
   weight_decay: 0.
@@ -48,18 +52,15 @@ training_args:
   dataloader_num_workers: 4
   lazy_preprocess: true
   tune_mm_mlp_adapter: True
-  train_vision_tower: False # defaults to false
+  train_vision_tower: False
   log_level: "info"
 
 model_args:
-  # model_name_or_path: "liuhaotian/llava-v1.5-7b"
   model_name_or_path: ${oc.env:LLAVA_MED_MODEL_PATH}
-  # version: "v1"
   version: "mistral_instruct"
   vision_tower: "openai/clip-vit-large-patch14-336"
-  #vision_tower: "openai/clip-vit-large-patch14"
   mm_projector_type: "mlp2x_gelu"   # DANGER ZONE! This changes the architecture compared to the checkpoint...
-  mm_vision_select_layer: -2        # What does this even mean?
+  mm_vision_select_layer: -2 
   mm_use_im_patch_token: False
   # IMPORTANT: If you wanna finetune projector layer set this to True and set mm_use_im_start_end to Flase (otherwise you get not implemented error)
   tune_mm_mlp_adapter: True
@@ -69,4 +70,4 @@ model_args:
 data_args:
   image_folder: ${data_dir}
   lazy_preprocess: true
-  image_aspect_ratio: "pad" # this should be set here not in training args
+  image_aspect_ratio: "pad"

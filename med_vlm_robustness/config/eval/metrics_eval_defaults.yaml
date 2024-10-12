@@ -1,23 +1,43 @@
 data_root_dir: ${oc.env:DATASET_ROOT_DIR}
 dataset: "SLAKE"
+# Define which key in the .json file of the dataset should be used for filtering iid and ood data
 data_shift: "modality"
+# Define the ood value
+# The samples having this value in the key defined in "data_shift" will be used as ood samples and the rest will be used as iid samples
 ood_value: "X-Ray"
+# Define which data split you used in fine-tuning. If you used the pretrained model and did not perform any finetuning, leave this parameter as it is (iid) and do not change it
 train_split: "iid"
+# Define which data split you want to use during evaluation.  Available options: ['iid', 'ood', 'all', 'sample']
+# Sample will randomly sample 5000 data pints from your dataset. This is intended to be used for MIMIC dataset where the data is too large
 split: "iid"
-model_type: "lora" #ia3
+# Define which fine-tuning method you used. Available options: ['pretrained','lora', 'ia3', 'prompt']
+model_type: "lora"
+# Define which metrics you want to evaluate as a list. Available options: ["traditional_metrics", "mistral", "mistral_closed"]
+# You can provide one or more values in a list
 metric_type: ["traditional_metrics", "mistral", "mistral_closed"]
+# Define if you want to use test data or the validation data during inference. Available options: ['test', 'val']
 mod: "test"
 seed: 123
 hyperparams_model_name: seed${seed}
-no_image: False
-train_no_image: False
-corruption: False
-corruption_strength: {
-    'blur':'low', 
-    'brightness': 'low',
-    'noise': 'low',
-}
 
 model_train_file: ${data_root_dir}/${dataset}/train.json
 model_val_file: ${data_root_dir}/${dataset}/validate.json
 model_test_file: ${data_root_dir}/${dataset}/test.json
+
+# Set this to True if you ran inference without using images (no image baseline)
+no_image: False
+# Set this to True if you have set "no_image: True" during fine-tuning
+train_no_image: False
+# Set this to True if you ran inference on corrupted data
+corruption: False
+# Define the probabilty and strength of each corruption method that you used in inference
+corruption_probabilities: {
+    'blur': 0.5, # Max: 1, Min: 0
+    'brightness': 0.5, # Max: 1, Min: 0
+    'noise': 0.5, # Max: 1, Min: 0
+}
+corruption_strength: {
+    'blur':'low', # Available options: ['low', 'medium', 'high']
+    'brightness': 'low', # Available options: ['low', 'medium', 'high']
+    'noise': 'low', # Available options: ['low', 'medium', 'high']
+}
