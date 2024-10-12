@@ -24,6 +24,12 @@ OVQA
 └── test.json
 ```
 
+After downloaded everything and set it up in the structure as described above, run
+```
+python ovqa_clean.py -p <path/to/OVQA>
+```
+This will create a ``train.json``, ``validate.json``, and ``test.json``with the corresponding questions in the OVQA folder. The original files will be saved as ``train_old.json``, ``validate_old.json``, and ``test_old.json``
+
 ## MIMIC-CXR-VQA
 
 In order to access the MIMIC-CXR-VQA dataset, you have to be a credentialed used on [Physionet](https://physionet.org).  
