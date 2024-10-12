@@ -5,7 +5,17 @@
 >2) We confirm LoRA as the best-performing PEFT method
 >3) No PEFT method consistently outperforms others in terms of robustness to shifts.
 
-![Alt text](figures/Pitfalls_Requirements.png)
+<div align="center">
+  <img width="70%" src="figures/Pitfalls_Requirements.png">
+</div>
+
+Pitfalls and Requirements for Systematic Evaluating the Robustness of VLMs in
+VQA Tasks. We aim to overcome pitfalls (P1-P3) in the current evaluation of VLM robustness by
+satisfying the three requirements (R1-R3): We define a diverse set of realistic shifts (R1). We use
+appropriate metrics for evaluation by using an LLM as evaluator of the VLM output (R2). Finally,
+we compare the results of the VLM with relevant sanity baselines to see the performance gains over
+such baselines like e.g. considering the text of the question only (R3).
+
 ## Table of Contents
 
 - [Install](#install)
