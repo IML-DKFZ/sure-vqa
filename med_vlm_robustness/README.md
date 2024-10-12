@@ -129,5 +129,25 @@ The file `mistral_metrics.json` contains Mistral evaluation results for open-end
 <a name="acknowledgement"></a>
 ## Acknowledgement
 
+The code for the fine-tuning is based on the [LlaVA-Med Repository](https://github.com/microsoft/LLaVA-Med?tab=readme-ov-file).
+
+This work was funded by Helmholtz Imaging (HI), a platform of the Helmholtz Incubator on Information and Data Science. This work is supported by the Helmholtz Association Initiative and Networking Fund under the Helmholtz AI platform grant (ALEGRA (ZT-I-PF-5-121))
+
+<div style="display: flex; justify-content: center; align-items: center; flex-wrap: nowrap;">
+  <a href="https://iml-dkfz.github.io/images/logo.png" style="display: inline-block;">
+    <img src="https://iml-dkfz.github.io/images/logo.png" alt="Image 1" width="200" style="margin-right: 10px;"/>
+  </a>
+  
+  <a href="https://helmholtz-imaging.de/wp-content/themes/helmholtz/assets/images/logo.png" style="display: inline-block;">
+    <img src="https://helmholtz-imaging.de/wp-content/themes/helmholtz/assets/images/logo.png" alt="Image 2" width="200" style="margin-right: 10px;"/>
+  </a>
+
+  <a href="https://www.dkfz.de/global2/img/dkfz-logo@2x.png" style="display: inline-block;">
+    <img src="https://www.dkfz.de/global2/img/dkfz-logo@2x.png" alt="Image 3" width="200"/>
+  </a>
+</div>
+
+This library is developed and maintained by the [Interactive Machine Learning Group](https://iml-dkfz.github.io/) of [Helmholtz Imaging](https://www.helmholtz-imaging.de/) and the [DKFZ](https://www.dkfz.de/de/index.html).
+
 ## Setting up OVQA Dataset
 - change the train, val and test set names as test.json train.json validate.json
