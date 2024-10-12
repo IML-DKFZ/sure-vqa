@@ -18,31 +18,90 @@ such baselines like e.g. considering the text of the question only (R3).
 
 ## Table of Contents
 
-- [Install](#install)
-- [Model Download](#model-download)
-- [Data Download](#data-download)
+- [Setup](#setup)
 - [Finetuning](#finetune)
 - [Inference](#inference)
 - [Evaluation](#evaluation)
 - [Acknowledgement](#acknowledgement)
 
-<a name="install"></a>
-## Install
-
-<a name="model_download"></a>
-## Model Download
-
-<a name="data_download"></a>
-## Data Download
+<a name="setup"></a>
+## Setup
+The code is tested with python version 3.10.
+1) Clone this repository
+2) Install the requirements 
+```
+pip install -r requirements.txt
+```
+3) Clone the LlaVA-Med v1.5 repository [here](https://github.com/microsoft/LLaVA-Med)
+4) Download LlaVA-Med v1.5 weights [here](https://huggingface.co/microsoft/llava-med-v1.5-mistral-7b)
+5) Add the relevant paths to your `.env` file. An example of this file is provided under `med_vlm_robustness/example.env`. You need to mainly add the paths of your; 
+    - Llava-Med v1.5 weights
+    - Experiment root directory
+    - Dataset root directory
 
 <a name="finetune"></a>
-## Finetuning
+## Fine-tuning
+To run fine-tuning you need to execute the `train.py` python file in the repository. The configurations for fine-tuning can be found in the file `config/train/training_defaults.yaml`. This `.yaml` file already contains example configurations for you, however, you can change these settings easily for your own use case.
+
+To run fine-tuning without using any images but only the question-answer pairs set the parameter `no_image` to `True`. Note that when you set this parameter to `True`, your fine-tuned model will have `no-image` tag in its name and if you want to run inference and evaluation on this model, you need to set `train_no_image` parameter in inference and evaluation config files to also `True`.
+
+After fine-tuning, the results are stored in a folder named using the hyperparameters you specified. This folder name is your fine-tuned model name and it will have the following structure:
+
+```
+llava-SLAKE_train_iid_content_type_Size-finetune_lora_rank128_lr3e-5_seed123
+├── init_weight
+    ├── adapter_config.json
+    ├── adapter_model.bin
+    ├── config.json
+    ├── non_lora_trainables.bin
+    ├── README.md
+├── adapter_config.json
+├── adapter_model.bin
+├── config.json
+├── non_lora_trainables.bin
+├── README.md
+├── trainer_state.json
+```
 
 <a name="inference"></a>
 ## Inference
+To run inference you need to execute the `inference.py` python file in the repository. The configurations for inference can be found in the file `config/inference/inference_defaults.yaml`. This `.yaml` file is used for running inference after you fine-tune a model. If you want to run the inference on the pretrained (no fine-tune) model you ca nuse `config/inference/inference_pretrained_defaults.yaml` file. Both files already contain example configurations for you as in the fine-tuning case. Note that you can change these settings easily for your own use case. 
+
+To run the inference for `no-image` baseline where the images are not utilized during inference and the model only uses question and answer pairs, set the parameter `no-image` to `True`. If you are running this baseline on a model which is also finetuned without images set the `train_no_image` parameter to also `True`. 
+
+To run the inference with corrupted images where the dataloader corrupts the images during inference with the given probability and strength level, set the parameter `corruption` to `True` and specify the strength and probability of each corruption in the related parameters as follows;
+```
+corruption_probabilities: {
+    'blur': 0.5,
+    'brightness': 0.5,
+    'noise': 0.5,
+}
+corruption_strength: {
+    'blur':'low', 
+    'brightness': 'low',
+    'noise': 'low',
+}
+```
+After inference, the results are stored in a subfolder called `eval` under your fine-tuned model folder, which has the following structure:
+
+```
+eval
+├── <type_of_inference_you_run>
+    ├── test_results.json
+```
 
 <a name="evaluation"></a>
 ## Evaluation
+After evaluation, the results are stored in the eval subfolder, which will have the following updated structure:
+```
+eval
+├── <type_of_inference_you_run>
+    ├── closed_ended_metrics.json
+    ├── mistral_metrics_closed.json
+    ├── mistral_metrics.json
+    ├── open_ended_metrics.json
+    ├── test_results.json
+```
 
 <a name="acknowledgement"></a>
 ## Acknowledgement
