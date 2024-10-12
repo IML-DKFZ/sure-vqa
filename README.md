@@ -6,7 +6,7 @@
 >3) No PEFT method consistently outperforms others in terms of robustness to shifts.
 
 <div align="center">
-  <img width="70%" src="figures/Pitfalls_Requirements.png">
+  <img width="70%" src="med_vlm_robustness/figures/Pitfalls_Requirements.png">
 </div>
 
 Pitfalls and Requirements for Systematic Evaluating the Robustness of VLMs in
