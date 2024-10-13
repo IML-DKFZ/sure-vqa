@@ -34,14 +34,27 @@ such baselines like e.g. considering the text of the question only (R3).
 ## Setup
 The code is tested with python version 3.10.
 1) Clone this repository
-2) Install the requirements 
+2) Create a conda environment and install the requirements 
     ```
     pip install -r requirements.txt
     ```
-3) Clone the LlaVA-Med v1.5 repository [here](https://github.com/microsoft/LLaVA-Med)
-4) Download LlaVA-Med v1.5 weights [here](https://huggingface.co/microsoft/llava-med-v1.5-mistral-7b)
-5) Add the relevant paths to your `.env` file. An example of this file is provided under `med_vlm_robustness/example.env`. You need to mainly add the paths of your; 
-    - Llava-Med v1.5 weights
+3) Clone the LLaVA-Med v1.5 repository [here](https://github.com/microsoft/LLaVA-Med)
+4) Navigate to the LLaVA-Med folder
+    ```
+    cd LLaVA-Med
+    ```
+5) Install LLaVA-Med to your conda environment
+    ```
+    pip install -e .
+    ```
+6) Create a new conda environment for evaluation 
+7) Install the packages in `requirements_eval.txt` to this environment. Since evaluation pipeline requires different package versions than fine-tuning and inference, you need to use a different conda environment.
+    ```
+    pip install -r requirements_eval.txt
+    ```
+8) Download LLaVA-Med v1.5 weights [here](https://huggingface.co/microsoft/llava-med-v1.5-mistral-7b)
+9) Add the relevant paths to your `.env` file. An example of this file is provided under `med_vlm_robustness/example.env`. You need to mainly add the paths of your; 
+    - LLaVA-Med v1.5 weights
     - Experiment root directory
     - Dataset root directory
 
