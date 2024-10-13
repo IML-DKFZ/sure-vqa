@@ -38,7 +38,7 @@ The code is tested with python version 3.10.
     ```
     pip install -r requirements.txt
     ```
-3) Clone the LLaVA-Med v1.5 repository [here](https://github.com/microsoft/LLaVA-Med)
+3) Clone the LLaVA-Med v1.5 forked and updated repository [here](https://github.com/KOFRJO/llava-med-1.5-forked-sure-vqa)
 4) Navigate to the LLaVA-Med folder
     ```
     cd LLaVA-Med
