@@ -1,3 +1,4 @@
+import itertools
 import json
 import os
 from argparse import ArgumentParser
@@ -5,6 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Tuple
 
+import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 import seaborn as sns
@@ -41,6 +43,7 @@ metrics_infos = {
 
 def get_human_automated_metrics_df(dataset:Dataset, metrics_dict:Dict, score_base_path:Path):
     all_human_scores = None
+    print(score_base_path)
     for rater in dataset.raters:
         human_score_files = [score_base_path / f"human_metrics_{dataset.open_closed}_{rater}.json"]
         human_scores = []
@@ -73,49 +76,44 @@ def get_human_automated_metrics_df(dataset:Dataset, metrics_dict:Dict, score_bas
             all_human_scores = pd.concat([all_human_scores, human_scores_df])
     return all_human_scores
 
-
 def get_human_human_metrics_df(dataset:Dataset, score_base_path:Path):
-    human_score_files_1 = [score_base_path / f"human_metrics_{dataset.open_closed}_{dataset.raters[0]}.json"]
-    human_score_files_2 = [score_base_path / f"human_metrics_{dataset.open_closed}_{dataset.raters[1]}.json"]
-    human_scores_1 = []
-    human_scores_2 = []
-    for human_score_file in human_score_files_1:
-        try:
-            with open(human_score_file, "r") as f:
-                human_scores_1.extend(json.load(f))
-        except:
-            print(f"Could not open {human_score_file}")
-    for human_score_file in human_score_files_2:
-        try:
-            with open(human_score_file, "r") as f:
-                human_scores_2.extend(json.load(f))
-        except:
-            print(f"Could not open {human_score_file}")
-    human_scores_1_df = pd.DataFrame(human_scores_1).set_index("qid")
-    human_scores_2_df = pd.DataFrame(human_scores_2).set_index("qid")
-    human_scores_1_df["human_score_2"] = None
-    for row in human_scores_1_df.iterrows():
-        qid = row[0]
-        human_score_2 = human_scores_2_df.loc[qid]["human_score"]
+    human_score_files = [score_base_path / f"human_metrics_{dataset.open_closed}_{rater}.json" for rater in dataset.raters]
+    human_scores = []
+    for human_score_file in human_score_files:
+        with open(human_score_file, "r") as f:
+            human_scores.append(json.load(f))
+    human_scores_df = pd.DataFrame(human_scores[0]).set_index("qid")
+    for i in range(1, len(human_scores)):
+        human_scores_df[f"human_score_{i+1}"] = pd.DataFrame(human_scores[i]).set_index("qid")["human_score"]
+    human_scores_df.rename({"human_score":"human_score_1"}, axis=1, inplace=True)
+    return human_scores_df
 
-        human_scores_1_df.at[qid, "human_score_2"] = human_score_2
-    return human_scores_1_df
-
-
-def get_human_human_correlation(human_human_metrics_df):
-    na_mask = ~human_human_metrics_df["human_score"].isna() & \
-              ~human_human_metrics_df["human_score_2"].isna()
-    kendall, p_val_kendall = kendalltau(
-        human_human_metrics_df[na_mask]["human_score"],
-        human_human_metrics_df[na_mask]["human_score_2"])
-    spearman, p_val_spearman = spearmanr(
-        human_human_metrics_df[na_mask]["human_score"],
-        human_human_metrics_df[na_mask]["human_score_2"])
+def get_human_human_correlation(human_human_metrics_df, num_dataset_raters):
+    rater_combinations = list(itertools.combinations(range(num_dataset_raters), 2))
+    kendalls = []
+    p_vals_kendall = []
+    spearmans = []
+    p_vals_spearman = []
+    for rater_combination in rater_combinations:
+        human_score = f"human_score_{rater_combination[0]+1}"
+        human_score_2 = f"human_score_{rater_combination[1]+1}"
+        na_mask = ~human_human_metrics_df[human_score].isna() & \
+                  ~human_human_metrics_df[human_score_2].isna()
+        kendall, p_val_kendall = kendalltau(
+            human_human_metrics_df[na_mask][human_score],
+            human_human_metrics_df[na_mask][human_score_2])
+        spearman, p_val_spearman = spearmanr(
+            human_human_metrics_df[na_mask][human_score],
+            human_human_metrics_df[na_mask][human_score_2])
+        kendalls.append(kendall)
+        p_vals_kendall.append(p_val_kendall)
+        spearmans.append(spearman)
+        p_vals_spearman.append(p_val_spearman)
     return {
-        "kendall": kendall,
-        "kendall_p": p_val_kendall,
-        "spearman": spearman,
-        "spearman_p": p_val_spearman
+        "kendall": np.mean(np.array(kendalls)),
+        "kendall_p": np.mean(np.array(p_vals_kendall)),
+        "spearman": np.mean(np.array(spearmans)),
+        "spearman_p": np.mean(np.array(p_vals_spearman))
     }
 
 
@@ -128,10 +126,7 @@ def correlation_matrix(dataset_dict: Dict, metrics_dict: Dict, exp_base_dir: Pat
         spearman_df = kendall_df.copy()
         spearman_p_df = kendall_df.copy()
         human_automated_metrics_df = get_human_automated_metrics_df(dataset, metrics_dict, score_base_path)
-        if len(dataset.raters) == 2:
-            human_human_metrics_df = get_human_human_metrics_df(dataset, score_base_path)
-        else:
-            print(f"Not two human raters for {dataset_name}. Only implemented for two raters.")
+        human_human_metrics_df = get_human_human_metrics_df(dataset, score_base_path)
         for metric_name_row, metric_info_row in metrics_dict.items():
             for metric_name_column, metric_info_column in metrics_dict.items():
                 if metric_name_row == "Human" and metric_name_column == "Human":
@@ -148,12 +143,12 @@ def correlation_matrix(dataset_dict: Dict, metrics_dict: Dict, exp_base_dir: Pat
                     human_automated_metrics_df[na_mask][metric_info_column.score_key])
                 spearman_df.at[metric_name_row, metric_name_column] = spearman
                 spearman_p_df.at[metric_name_row, metric_name_column] = p_val_spearman
-        if len(dataset.raters) == 2:
-            human_human_correlation = get_human_human_correlation(human_human_metrics_df)
-            kendall_df.at["Human", "Human"] = human_human_correlation["kendall"]
-            kendall_p_df.at["Human", "Human"] = human_human_correlation["kendall_p"]
-            spearman_df.at["Human", "Human"] = human_human_correlation["spearman"]
-            spearman_p_df.at["Human", "Human"] = human_human_correlation["spearman_p"]
+        #if len(dataset.raters) == 2:
+        human_human_correlation = get_human_human_correlation(human_human_metrics_df, len(dataset.raters))
+        kendall_df.at["Human", "Human"] = human_human_correlation["kendall"]
+        kendall_p_df.at["Human", "Human"] = human_human_correlation["kendall_p"]
+        spearman_df.at["Human", "Human"] = human_human_correlation["spearman"]
+        spearman_p_df.at["Human", "Human"] = human_human_correlation["spearman_p"]
         dataset_correlations[dataset_name] = {
             "human_automated_metrics_df": human_automated_metrics_df,
             "human_human_metrics_df": human_human_metrics_df if len(dataset.raters) == 2 else None,
@@ -280,7 +275,7 @@ def main_cli():
         "-r",
         type=str,
         help="Raters to include in the analysis. Exactly two raters should be specified.",
-        nargs=2,
+        nargs=5,
         required=True
     )
     parser.add_argument(
@@ -311,7 +306,7 @@ def main(args):
     heatmap_plots(dataset_correlations, plt_save_dir=save_dir)
     heatmap_plots_small(dataset_correlations, plt_save_dir=save_dir)
     scatter_plots(dataset_correlations, plt_save_dir=save_dir,
-                  metrics_correlations=[("Human", "Mistral"), ("Human", "Human"), ("Human", "BLEU"),
+                  metrics_correlations=[("Human", "Mistral"), ("Human", "BLEU"),
                                         ("Human", "Exact Match"), ("Human", "F1"), ("Human", "Precision"),
                                         ("Human", "Recall")])
 
