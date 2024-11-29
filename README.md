@@ -38,7 +38,7 @@ The code is tested with python version 3.10.
     ```
     pip install -r requirements.txt
     ```
-3) Clone the LLaVA-Med v1.5 forked and updated repository [here](https://github.com/KOFRJO/llava-med-1.5-forked-sure-vqa)
+3) Clone the LLaVA-Med v1.5 forked and updated repository [here](https://github.com/IML-DKFZ/llava-forked-sure-vqa)
 4) Navigate to the LLaVA-Med folder
     ```
     cd LLaVA-Med
@@ -90,6 +90,15 @@ llava-SLAKE_train_iid_content_type_Size-finetune_lora_rank128_lr3e-5_seed123 (yo
 ├── README.md
 ├── trainer_state.json
 ```
+
+### Changing the Shifts
+
+You can flexibly adapt the kind of shift that you want to use for your study. Below are the options for potential shifts if you preprocess the SLAKE, OVQA, and MIMIC datasets as exlained in [this README](med_vlm_robustness/data/README.md). Green denote the shifts that we used for the fine-tuning study of our publication. Simply adapt the respective keywords in the configuration yaml files.
+
+<div align="center">
+  <img width="70%" src="med_vlm_robustness/images_doc/Shift_Options.png">
+</div>
+
 
 <a name="inference"></a>
 ## Inference
