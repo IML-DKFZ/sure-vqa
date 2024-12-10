@@ -1,9 +1,14 @@
 import argparse
 import json
+from typing import Callable
+from dataclasses import dataclass
+
 import pandas as pd
 from nltk.translate.bleu_score import sentence_bleu
 from eval.eval_metrics import calculate_exactmatch, calculate_f1score, get_accuracy, get_open_ended_metrics
 from eval.glossary import *
+from eval.gemma_eval import gemma_eval
+from eval.gemma_eval import average_metrics as average_gemma_metrics
 from mistral_eval import mistal_eval, average_mistral_metrics
 
 from pathlib import Path
@@ -226,6 +231,12 @@ def get_eval_path(cfg):
     return Path(eval_path)
 
 
+@dataclass
+class LLMMetric:
+    name: str
+    eval_func: Callable
+    average_func: Callable
+
 def main(cfg):
     eval_path = get_eval_path(cfg)
     model_output_file = eval_path / "test_results.json"
@@ -266,34 +277,42 @@ def main(cfg):
         with open(open_ended_metrics_file, 'w') as f:
             json.dump(open_ended_results, f, indent=4, sort_keys=True)
 
-    if "mistral" in cfg.metric_type:
-        mistral_scores = mistal_eval(model_output_file=model_output_file)
-        mistral_metrics_file = eval_path / "mistral_metrics.json"
-        if not Path(mistral_metrics_file).parent.is_dir():
-            os.makedirs(Path(mistral_metrics_file).parent)
-        with open(mistral_metrics_file, 'w') as json_file:
-            json.dump(mistral_scores, json_file, indent=4)
+    llm_metrics = [
+        LLMMetric("mistral", mistal_eval, average_mistral_metrics),
+        LLMMetric("gemma", gemma_eval, average_gemma_metrics)
+    ]
+    llm_metrics_closed = [
+        LLMMetric("mistral_closed", mistal_eval, average_mistral_metrics),
+        LLMMetric("gemma_closed", gemma_eval, average_gemma_metrics)
+    ]
 
-    if "mistral_closed" in cfg.metric_type:
-        if cfg.dataset != "MIMIC":
-            mistral_scores = mistal_eval(model_output_file=model_output_file, closed=True)
-        else:
-            if cfg.mod == "train":
-                dataset = train_df
-            elif cfg.mod == "val":
-                dataset = val_df
+    for llm_metric in llm_metrics:
+        if llm_metric.name in cfg.metric_type:
+            metrics_file = eval_path / f"{llm_metric.name}_metrics.json"
+            llm_metric.eval_func(model_output_file=model_output_file, eval_file=str(metrics_file), seed=cfg.seed)
+
+    for llm_metric in llm_metrics_closed:
+        if llm_metric.name in cfg.metric_type:
+            if cfg.dataset != "MIMIC":
+                llm_scores = llm_metric.eval_func(model_output_file=model_output_file, closed=True, seed=cfg.seed)
             else:
-                dataset = test_df
-            mistral_scores = mistal_eval(model_output_file=model_output_file, closed=True, data_categories=dataset)
-            mistral_scores_multilabel = mistal_eval(model_output_file=model_output_file, closed=True, multilabel=True,
-                                                    data_categories=dataset)
-            mistral_scores = [*mistral_scores[1:], *mistral_scores_multilabel[1:]]
-            mistral_scores = average_mistral_metrics(mistral_scores, closed=True)
-        mistral_metrics_file = eval_path / "mistral_metrics_closed.json"
-        if not Path(mistral_metrics_file).parent.is_dir():
-            os.makedirs(Path(mistral_metrics_file).parent)
-        with open(mistral_metrics_file, 'w') as json_file:
-            json.dump(mistral_scores, json_file, indent=4)
+                if cfg.mod == "train":
+                    dataset = train_df
+                elif cfg.mod == "val":
+                    dataset = val_df
+                else:
+                    dataset = test_df
+                llm_scores = llm_metric.eval_func(model_output_file=model_output_file, closed=True,
+                                                  data_categories=dataset, seed=cfg.seed)
+                llm_scores_multilabel = llm_metric.eval_func(model_output_file=model_output_file, closed=True,
+                                                             multilabel=True, data_categories=dataset, seed=cfg.seed)
+                llm_scores = [*llm_scores[1:], *llm_scores_multilabel[1:]]
+                llm_scores = llm_metric.average_func(llm_scores, closed=True)
+            metrics_file = eval_path / f'{llm_metric.name.split("_")[0]}_metrics_closed.json'
+            if not Path(metrics_file).parent.is_dir():
+                os.makedirs(Path(metrics_file).parent)
+            with open(metrics_file, 'w') as json_file:
+                json.dump(llm_scores, json_file, indent=4)
 
 
 if __name__ == '__main__':

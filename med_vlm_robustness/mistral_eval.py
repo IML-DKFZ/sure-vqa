@@ -9,9 +9,13 @@ from tqdm import tqdm
 from pathlib import Path
 import re
 
+from med_vlm_robustness.utils import set_seed
+
 MISTRAL_PROMPT_FILE_PATH = os.getenv("MISTRAL_PROMPT_FILE_PATH")
 
-def mistal_eval(model_output_file, mistral_eval_file:Optional[str] = None, batch_size:int = 16, closed=False, multilabel=False, data_categories=None):
+def mistal_eval(model_output_file, eval_file:Optional[str] = None, batch_size:int = 16, closed=False, multilabel=False,
+                data_categories=None, seed: int = 123):
+    set_seed(seed)
     mistral_output_list=[]
 
     # Load model and tokenizer from huggingface
@@ -202,11 +206,11 @@ def mistal_eval(model_output_file, mistral_eval_file:Optional[str] = None, batch
         idx += 1
 
     mistral_output_list = average_mistral_metrics(mistral_output_list, closed)
-    if mistral_eval_file is not None:
+    if eval_file is not None:
         # save mistral evaluation as JSON
-        if not Path(mistral_eval_file).parent.is_dir():
-            os.makedirs(Path(mistral_eval_file).parent)
-        with open(mistral_eval_file, 'w') as json_file:
+        if not Path(eval_file).parent.is_dir():
+            os.makedirs(Path(eval_file).parent)
+        with open(eval_file, 'w') as json_file:
             json.dump(mistral_output_list, json_file, indent=4)
     else:
         return mistral_output_list
@@ -258,7 +262,7 @@ if __name__ == '__main__':
     start = time.perf_counter()
     model_output_file = "/nvme/VLMRobustness/Experiments/SLAKE/pretrained/eval/SLAKE_test_iid_modality_X-Ray/test_results.json"
     mistral_eval_file = f"/nvme/VLMRobustness/Experiments/SLAKE/pretrained/eval/SLAKE_test_iid_modality_X-Ray/mistral_scores.json"
-    mistal_eval(model_output_file=model_output_file, mistral_eval_file=mistral_eval_file)
+    mistal_eval(model_output_file=model_output_file, eval_file=mistral_eval_file)
     end = time.perf_counter()
     time_sec = end - start
     time_min = time_sec / 60

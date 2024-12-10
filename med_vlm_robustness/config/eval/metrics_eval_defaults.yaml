@@ -14,7 +14,7 @@ split: "iid"
 model_type: "lora"
 # Define which metrics you want to evaluate as a list. Available options: ["traditional_metrics", "mistral", "mistral_closed"]
 # You can provide one or more values in a list
-metric_type: ["traditional_metrics", "mistral", "mistral_closed"]
+metric_type: ["traditional_metrics", "gemma", "gemma_closed"]
 # Define if you want to use test data or the validation data during inference. Available options: ['test', 'val']
 mod: "test"
 seed: 123
