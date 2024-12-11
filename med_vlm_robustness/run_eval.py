@@ -213,7 +213,7 @@ def get_eval_path(cfg):
     if cfg.no_image:
         split_file_test = split_file_test + '_no_image'
 
-    if cfg.corruption:
+    if cfg.get("corruption", False):
         split_file_test = split_file_test + '_corruption'
         strength = cfg.corruption_strength['blur']
         split_file_test = split_file_test + '_' + str(strength) 
