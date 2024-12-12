@@ -21,7 +21,10 @@ seed: 123
 data_dir: ${data_root_dir}/${dataset}
 hyperparams_model_name: seed${seed}
 # Your base model is the LlaVA-Med v1.5 and finetuned weights will be added on top of it
-model_base: ${oc.env:LLAVA_MED_MODEL_PATH}
+# model_base is optional, will default to environment variable LLAVA_MED_MODEL_PATH if is_medical is set to True,
+# otherwise will default to environment variable LLAVA_MODEL_PATH, to None for pretrained and full_finetuning models
+# model_base: ${oc.env:LLAVA_MED_MODEL_PATH}
+is_medical: True
 max_new_tokens: 100
 num_workers: 24
 batch_size: 1

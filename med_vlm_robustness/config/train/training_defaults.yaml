@@ -56,7 +56,7 @@ training_args:
   log_level: "info"
 
 model_args:
-  model_name_or_path: ${oc.env:LLAVA_MED_MODEL_PATH}
+  is_medical: False
   version: "mistral_instruct"
   vision_tower: "openai/clip-vit-large-patch14-336"
   mm_projector_type: "mlp2x_gelu"   # DANGER ZONE! This changes the architecture compared to the checkpoint...

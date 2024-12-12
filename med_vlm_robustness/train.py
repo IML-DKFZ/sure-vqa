@@ -6,6 +6,11 @@ from utils import get_config, set_seed
 
 def main(cfg):
     set_seed(cfg.training_args.seed)
+    if cfg.model_args.get("is_medical", True):
+        cfg.model_args.model_name_or_path = cfg.model_args.get("model_name_or_path", os.getenv("LLAVA_MED_MODEL_PATH"))
+    else:
+        cfg.model_args.model_name_or_path = cfg.model_args.get("model_name_or_path", os.getenv("LLAVA_MODEL_PATH"))
+    print(cfg.model_args.model_name_or_path)
     model_args = ModelArguments(**cfg.model_args)
     data_args = DataArguments(**cfg.data_args)
 

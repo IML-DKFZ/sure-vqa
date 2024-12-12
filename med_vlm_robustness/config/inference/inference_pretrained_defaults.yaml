@@ -23,6 +23,7 @@ data_dir: ${data_root_dir}/${dataset}
 model_path: ${oc.env:LLAVA_MED_MODEL_PATH}
 # set the base model to null since you do not use a finetuned model. Do not change this.
 model_base: null
+is_medical: True
 max_new_tokens: 100
 num_workers: 24
 batch_size: 1

@@ -34,18 +34,26 @@ class LLaVA_Med(pl.LightningModule):
         super().__init__()
         disable_torch_init()
         self.model_path = cfg.model_path
-        self.model_base = cfg.model_base if hasattr(cfg, "model_base") else None
+        self.model_type = cfg.model_type
+        self.is_medical = cfg.get("is_medical", True)
+        if self.model_type == "full_finetuning" or self.model_type == "pretrained":
+            self.model_base = cfg.get("model_base", None)
+        else:
+            if self.is_medical:
+                self.model_base = cfg.get("model_base", os.getenv("LLAVA_MED_MODEL_PATH"))
+            else:
+                self.model_base = cfg.get("model_base", os.getenv("LLAVA_MODEL_PATH"))
         self.model_name = get_model_name_from_path(self.model_path)
         self.max_new_token = cfg.max_new_tokens
-
+        print(f"Model base: {self.model_base}")
         self.tokenizer, self.model, self.image_processor, self.context_len = load_pretrained_model(
             model_path=self.model_path,
             model_base=self.model_base,
             model_name=self.model_name,
+            is_medical=self.is_medical
         )
         self.test_results = []
         self.output_file = cfg.output_file
-        self.model_type = cfg.model_type
         if self.model_type == "prompt":
             self.prompt_embed = torch.load(f"{cfg.model_path}/adapter_model.bin")
 
