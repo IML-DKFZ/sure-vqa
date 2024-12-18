@@ -48,7 +48,11 @@ def main(cfg):
         cfg.model_name = f"{cfg.model_name}_{cfg.hyperparams_model_name}"
 
     if "model_path" not in cfg:
-        cfg["model_path"] = f"{os.getenv('EXPERIMENT_ROOT_DIR')}/{cfg.dataset}/{cfg.model_type}/{cfg.model_name}"
+        if not cfg.get("extend_experiment_dir", False):
+            cfg["model_path"] = f"{os.getenv('EXPERIMENT_ROOT_DIR')}/{cfg.dataset}/{cfg.model_type}/{cfg.model_name}"
+        else:
+            medical_str = "medical" if cfg.get("is_medical", True) else "non_medical"
+            cfg["model_path"] = f"{os.getenv('EXPERIMENT_ROOT_DIR')}/{medical_str}/{cfg.dataset}/{cfg.model_type}/{cfg.model_name}"
     print(f"Model path: {cfg.model_path}")
 
     if cfg.corruption:
@@ -63,8 +67,12 @@ def main(cfg):
         if cfg.model_type != "pretrained":
             cfg["output_file"] = f"{cfg.model_path}/eval/{split_file_name}/test_results.json"
         else:
-            cfg["output_file"] = f"{os.getenv('EXPERIMENT_ROOT_DIR')}/{cfg.dataset}/{cfg.model_type}/eval/{split_file_name}/test_results.json"
-
+            if not cfg.get("extend_experiment_dir", False):
+                cfg["output_file"] = f"{os.getenv('EXPERIMENT_ROOT_DIR')}/{cfg.dataset}/{cfg.model_type}/eval/{split_file_name}/test_results.json"
+            else:
+                medical_str = "medical" if cfg.get("is_medical", True) else "non_medical"
+                cfg[
+                    "output_file"] = f"{os.getenv('EXPERIMENT_ROOT_DIR')}/{medical_str}/{cfg.dataset}/{cfg.model_type}/eval/{split_file_name}/test_results.json"
     llava = LLaVA_Med(cfg)
 
     trainer = Trainer(accelerator="gpu" if torch.cuda.is_available() else "cpu")

@@ -224,10 +224,15 @@ def get_eval_path(cfg):
     model_name = f"llava-{split_file_train}-finetune_{cfg.model_type}"
     if "hyperparams_model_name" in cfg and cfg.hyperparams_model_name is not None:
         model_name = f"{model_name}_{cfg.hyperparams_model_name}"
-    if cfg.model_type != "pretrained":
-        eval_path = f"{os.getenv('EXPERIMENT_ROOT_DIR')}/{cfg.dataset}/{cfg.model_type}/{model_name}/eval/{split_file_test}"
+    if not cfg.get("extend_experiment_dir", False):
+        base_dir = os.getenv('EXPERIMENT_ROOT_DIR')
     else:
-        eval_path = f"{os.getenv('EXPERIMENT_ROOT_DIR')}/{cfg.dataset}/{cfg.model_type}/eval/{split_file_test}"
+        medical_str = "medical" if cfg.get("is_medical", True) else "non_medical"
+        base_dir = f"{os.getenv('EXPERIMENT_ROOT_DIR')}/{medical_str}"
+    if cfg.model_type != "pretrained":
+        eval_path = f"{base_dir}/{cfg.dataset}/{cfg.model_type}/{model_name}/eval/{split_file_test}"
+    else:
+        eval_path = f"{base_dir}/{cfg.dataset}/{cfg.model_type}/eval/{split_file_test}"
     return Path(eval_path)
 
 
