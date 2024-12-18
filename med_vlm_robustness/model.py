@@ -27,6 +27,7 @@ from llava.mm_utils import (
     KeywordsStoppingCriteria,
 )
 from llava.conversation import conv_templates, SeparatorStyle
+from safetensors.torch import load_file
 
 
 class LLaVA_Med(pl.LightningModule):
@@ -55,7 +56,14 @@ class LLaVA_Med(pl.LightningModule):
         self.test_results = []
         self.output_file = cfg.output_file
         if self.model_type == "prompt":
-            self.prompt_embed = torch.load(f"{cfg.model_path}/adapter_model.bin")
+            base_path = os.path.join(cfg.model_path, "adapter_model")
+            bin_path = base_path + ".bin"
+            safetensor_path = base_path + ".safetensors"
+
+            if os.path.isfile(bin_path):
+                self.prompt_embed = torch.load(bin_path)
+            else:
+                self.prompt_embed = load_file(safetensor_path)
 
 
     def test_step(self, batch, batch_idx):
