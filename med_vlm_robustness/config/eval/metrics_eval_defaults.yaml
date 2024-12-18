@@ -1,4 +1,7 @@
 data_root_dir: ${oc.env:DATASET_ROOT_DIR}
+# If set to True, the experiment directory will be extended with medical/non_medical information
+extend_experiment_dir: False
+is_medical: True
 dataset: "SLAKE"
 # Define which key in the .json file of the dataset should be used for filtering iid and ood data
 data_shift: "modality"
