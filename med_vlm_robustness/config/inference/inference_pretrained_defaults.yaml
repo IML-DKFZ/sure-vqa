@@ -20,7 +20,7 @@ model_type: "pretrained"
 seed: 123
 data_dir: ${data_root_dir}/${dataset}
 # Path_to_pretrained_model. Do not change this.
-model_path: ${oc.env:LLAVA_MED_MODEL_PATH}
+# model_path: ${oc.env:LLAVA_MED_MODEL_PATH}
 # set the base model to null since you do not use a finetuned model. Do not change this.
 model_base: null
 is_medical: True

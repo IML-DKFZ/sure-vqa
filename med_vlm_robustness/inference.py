@@ -48,11 +48,18 @@ def main(cfg):
         cfg.model_name = f"{cfg.model_name}_{cfg.hyperparams_model_name}"
 
     if "model_path" not in cfg:
-        if not cfg.get("extend_experiment_dir", False):
-            cfg["model_path"] = f"{os.getenv('EXPERIMENT_ROOT_DIR')}/{cfg.dataset}/{cfg.model_type}/{cfg.model_name}"
+        if cfg.model_type != 'pretrained':
+            if not cfg.get("extend_experiment_dir", False):
+                cfg["model_path"] = f"{os.getenv('EXPERIMENT_ROOT_DIR')}/{cfg.dataset}/{cfg.model_type}/{cfg.model_name}"
+            else:
+                medical_str = "medical" if cfg.get("is_medical", True) else "non_medical"
+                cfg["model_path"] = f"{os.getenv('EXPERIMENT_ROOT_DIR')}/{medical_str}/{cfg.dataset}/{cfg.model_type}/{cfg.model_name}"
         else:
-            medical_str = "medical" if cfg.get("is_medical", True) else "non_medical"
-            cfg["model_path"] = f"{os.getenv('EXPERIMENT_ROOT_DIR')}/{medical_str}/{cfg.dataset}/{cfg.model_type}/{cfg.model_name}"
+            if cfg.get('is_medical', True):
+                cfg["model_path"] = os.getenv('LLAVA_MED_MODEL_PATH')
+            else:
+                cfg["model_path"] = os.getenv('LLAVA_MODEL_PATH')
+
     print(f"Model path: {cfg.model_path}")
 
     if cfg.corruption:
