@@ -1,20 +1,16 @@
 # SURE-VQA: SYSTEMATIC UNDERSTANDING OF ROBUSTNESS EVALUATION IN MEDICAL VQA TASKS
 
-> Vision-Language Models (VLMs) have great potential in medical tasks, like Visual Question Answering (VQA), where they could act as interactive assistants for both patients and clinicians. Yet their robustness to distribution shifts on unseen data remains a critical concern for safe deployment. Evaluating such robustness requires a controlled experimental setup that allows for systematic insights into the model’s behavior. However, we demonstrate that current setups fail to offer sufficiently thorough evaluations, limiting their ability to accurately assess model robustness. To address this gap, our work introduces a novel framework, called SURE-VQA, centered around three key requirements to overcome the current pitfalls and systematically analyze the robustness of VLMs: 1) Since robustness on synthetic shifts does not necessarily translate to real-world shifts, robustness should be measured on real-world shifts that are inherent to the VQA data; 2) Traditional token-matching metrics often fail to capture underlying semantics, necessitating the use of large language models (LLMs) for more accurate semantic evaluation; 3) Model performance often lacks interpretability due to missing sanity baselines, thus meaningful baselines should be reported that allow assessing the multimodal impact on the VLM. To demonstrate the relevance of this framework, we conduct a study on the robustness of various Parameter-Efficient Fine-Tuning (PEFT) methods across three medical datasets with fourdifferent types of distribution shifts. Our study reveals several important findings:
->1) Sanity baselines that do not utilize image data can perform surprisingly well
->2) We confirm LoRA as the best-performing PEFT method
->3) No PEFT method consistently outperforms others in terms of robustness to shifts.
+> Vision-Language Models (VLMs) have great potential in medical tasks, like Visual Question Answering (VQA), where they could act as interactive assistants for both patients and clinicians. Yet their robustness to distribution shifts on unseen data remains a key concern for safe deployment. Evaluating such robustness requires a controlled experimental setup that allows for systematic insights into the model's behavior. However, we demonstrate that current setups fail to offer sufficiently thorough evaluations. To address this gap, we introduce a novel framework, called \textit{SURE-VQA}, centered around three key requirements to overcome current pitfalls and systematically analyze VLM robustness: 1) Since robustness on synthetic shifts does not necessarily translate to real-world shifts, it should be measured on real-world shifts that are inherent to the VQA data; 2) Traditional token-matching metrics often fail to capture underlying semantics, necessitating the use of large language models (LLMs) for more accurate semantic evaluation; 3) Model performance often lacks interpretability due to missing sanity baselines, thus meaningful baselines should be reported that allow assessing the multimodal impact on the VLM.
+To demonstrate the relevance of this framework, we conduct a study on the robustness of various Fine-Tuning (FT) methods across three medical datasets with four types of distribution shifts. Our study highlights key insights into robustness:
+>1) No FT method consistently outperforms others in robustness 
+>2) Robustness trends are more stable across FT methods than across distribution shifts. 
 
+Additionally, we find that simple sanity baselines that do not use the image data can perform surprisingly well and confirm LoRA as the best-performing FT method on in-distribution data. 
 <div align="center">
   <img width="70%" src="med_vlm_robustness/images_doc/Pitfalls_Requirements.png">
 </div>
 
-Pitfalls and Requirements for Systematic Evaluating the Robustness of VLMs in
-VQA Tasks. We aim to overcome pitfalls (P1-P3) in the current evaluation of VLM robustness by
-satisfying the three requirements (R1-R3): We define a diverse set of realistic shifts (R1). We use
-appropriate metrics for evaluation by using an LLM as evaluator of the VLM output (R2). Finally,
-we compare the results of the VLM with relevant sanity baselines to see the performance gains over
-such baselines like e.g. considering the text of the question only (R3).
+Pitfalls and Requirements for Systematic Evaluating the Robustness of VLMs in VQA Tasks. We aim to overcome pitfalls (P1-P3) in the current evaluation of VLM robustness by satisfying the three requirements (R1-R3): We define a diverse set of realistic shifts (R1). We use appropriate metrics for evaluation by using an LLM as evaluator of the VLM output (R2). Finally, we compare the results of the VLM with relevant sanity baselines to see the performance gains over such baselines like considering the text of the question only (R3).
 
 ## Table of Contents
 
@@ -47,13 +43,8 @@ The code is tested with python version 3.10.
     ```
     pip install -e .
     ```
-6) Create a new conda environment for evaluation 
-7) Install the packages in `requirements_eval.txt` to this environment. Since evaluation pipeline requires different package versions than fine-tuning and inference, you need to use a different conda environment.
-    ```
-    pip install -r requirements_eval.txt
-    ```
-8) Download LLaVA-Med v1.5 weights [here](https://huggingface.co/microsoft/llava-med-v1.5-mistral-7b)
-9) Add the relevant paths to your `.env` file. An example of this file is provided under `med_vlm_robustness/example.env`. You need to mainly add the paths of your; 
+6) Download LLaVA-Med v1.5 weights [here](https://huggingface.co/microsoft/llava-med-v1.5-mistral-7b)
+7) Add the relevant paths to your `.env` file. An example of this file is provided under `med_vlm_robustness/example.env`. You need to mainly add the paths of your; 
     - LLaVA-Med v1.5 weights
     - Experiment root directory
     - Dataset root directory
@@ -132,11 +123,11 @@ The `type_of_inference_you_run` folder will be generated based on the configurat
 ## Evaluation
 To run the evaluation, execute the `run_eval.py` script found in the repository. Evaluation configurations are located in the `config/eval/metrics_eval_defaults.yaml` file. This configuration file includes example settings that you can easily adjust to fit your specific requirements. Keep in mind that evaluation will not proceed unless a `test_results.json` file has been generated by the inference pipeline. 
 
-A key parameter in the configuration file is `metric_type`, which specifies the metrics to be calculated during evaluation. Available options include `["traditional_metrics", "mistral", "mistral_closed"]`. You can select one or multiple metrics by listing them accordingly. 
+A key parameter in the configuration file is `metric_type`, which specifies the metrics to be calculated during evaluation. Available options include `["traditional_metrics", "gemma", "gemma_closed"]`. You can select one or multiple metrics by listing them accordingly. 
 
 - The `traditional_metrics` option includes metrics such as BLEU score, accuracy, and F1-score.
-- The `mistral` option evaluates open-ended questions using Mistral, an LLM-based metric.
-- The `mistral_closed` option does the same for close-ended questions.
+- The `gemma` option evaluates open-ended questions using Gemma, an LLM-based metric.
+- The `gemma_closed` option does the same for close-ended questions.
 
 **Evaluate Inference without Images:** If your inference was performed without using images and you wish to obtain performance metrics for this run, set the `no_image` parameter to `True`. Additionally, if your model was fine-tuned without images (regardless of the inference run), ensure that the `train_no_image` parameter is also set to `True`.
 
@@ -147,9 +138,9 @@ After evaluation, the results are stored in the same `eval` folder as used for i
 eval
 ├── <type_of_inference_you_run>
     ├── closed_ended_metrics.json
-    ├── mistral_metrics_closed.json
-    ├── mistral_metrics.json
+    ├── gemma_metrics_closed.json
+    ├── gemma_metrics.json
     ├── open_ended_metrics.json
     ├── test_results.json
 ```
-The file `mistral_metrics.json` contains Mistral evaluation results for open-ended questions, while `mistral_metrics_closed.json` holds the results for close-ended questions. The folder name, `type_of_inference_you_run`, is defined during inference. It’s essential to correctly set the parameters in the evaluation configuration to ensure that evaluation is performed on the correct inference run.
+The file `gemma_metrics.json` contains Gemma evaluation results for open-ended questions, while `gemma_metrics_closed.json` holds the results for close-ended questions. The folder name, `type_of_inference_you_run`, is defined during inference. It’s essential to correctly set the parameters in the evaluation configuration to ensure that evaluation is performed on the correct inference run.
