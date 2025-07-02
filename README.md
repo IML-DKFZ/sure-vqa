@@ -144,3 +144,13 @@ eval
     ├── test_results.json
 ```
 The file `gemma_metrics.json` contains Gemma evaluation results for open-ended questions, while `gemma_metrics_closed.json` holds the results for close-ended questions. The folder name, `type_of_inference_you_run`, is defined during inference. It’s essential to correctly set the parameters in the evaluation configuration to ensure that evaluation is performed on the correct inference run.
+
+<br>
+
+<p align="center">
+  <img src="https://polybox.ethz.ch/index.php/s/I6VJEPrCDW9zbEE/download" width="190"> &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="https://polybox.ethz.ch/index.php/s/kqDrOTTIzPFYPU7/download" width="91"> &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/Deutsches_Krebsforschungszentrum_Logo.svg/1200px-Deutsches_Krebsforschungszentrum_Logo.svg.png" width="270">
+</p>
+
+This library is developed and maintained by the [Interactive Machine Learning Group](https://iml-dkfz.github.io/) of [Helmholtz Imaging](https://www.helmholtz-imaging.de/) and the [DKFZ](https://www.dkfz.de/de/index.html).
